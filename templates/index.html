@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Trang chủ{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <section class="card hero-card">
+        <h1 class="title">ようこそ – Welcome!</h1>
+        <p class="subtitle">
+            Đây là trang demo FastAPI + PostgreSQL + HTML/CSS/JS
+            với giao diện tối giản kiểu Nhật, tông màu mát & nhẹ nhàng.
+        </p>
+        <div class="hero-actions">
+            <a href="/login" class="btn primary">Bắt đầu đăng nhập</a>
+            <a href="/register" class="btn ghost">Tạo tài khoản mới</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

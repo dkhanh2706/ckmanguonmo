@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Đăng ký{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <section class="card auth-card">
+        <h2 class="title">Tạo tài khoản</h2>
+        <p class="subtitle">Bắt đầu hành trình mới của bạn ✨</p>
+
+        <form id="registerForm" class="form">
+            <div class="field">
+                <label for="regFullName">Họ tên</label>
+                <input type="text" id="regFullName" placeholder="Nguyễn Văn A" />
+            </div>
+
+            <div class="field">
+                <label for="regEmail">Email</label>
+                <input type="email" id="regEmail" placeholder="you@example.com" required />
+            </div>
+
+            <div class="field">
+                <label for="regPassword">Mật khẩu</label>
+                <input type="password" id="regPassword" placeholder="Ít nhất 6 ký tự" required />
+            </div>
+
+            <button type="submit" class="btn primary full-width">Đăng ký</button>
+        </form>
+
+        <p id="registerMessage" class="message"></p>
+
+        <div class="auth-links">
+            <span>Đã có tài khoản?</span>
+            <a href="/login">Đăng nhập</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const full_name = document.getElementById("regFullName").value;
+    const email = document.getElementById("regEmail").value;
+    const password = document.getElementById("regPassword").value;
+
+    const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ full_name, email, password })
+    });
+
+    const data = await res.json();
+    const msg = document.getElementById("registerMessage");
+
+    if (res.ok) {
+        msg.textContent = "Đăng ký thành công! Hãy đăng nhập.";
+        msg.classList.remove("error");
+        msg.classList.add("success");
+    } else {
+        msg.textContent = data.detail || "Đăng ký thất bại";
+        msg.classList.remove("success");
+        msg.classList.add("error");
+    }
+});
+</script>
+{% endblock %}

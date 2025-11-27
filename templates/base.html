@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Yuki App{% endblock %}</title>
+
+    <!-- Font kiểu Nhật -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <div class="bg-overlay"></div>
+
+    <header class="header">
+        <div class="logo">
+            <span class="logo-mark">雪</span>
+            <span class="logo-text">Yuki Board</span>
+        </div>
+        <nav class="nav">
+            <!-- Menu mặc định khi CHƯA đăng nhập -->
+            <a href="/" class="nav-link">Trang chủ</a>
+            <a href="/login" class="nav-link">Đăng nhập</a>
+            <a href="/register" class="nav-link">Đăng ký</a>
+            <a href="/forgot-password" class="nav-link">Quên mật khẩu</a>
+        </nav>
+    </header>
+
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <span>Made with ☕ &amp; ✨ in Japan style</span>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+
+    <!-- Script xử lý hiển thị "Hi, tên" sau khi đăng nhập -->
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const userJson = localStorage.getItem("user");
+        if (!userJson) {
+            return; // chưa đăng nhập -> giữ menu mặc định
+        }
+
+        let user;
+        try {
+            user = JSON.parse(userJson);
+        } catch (e) {
+            console.error("Lỗi parse user:", e);
+            return;
+        }
+
+        const nav = document.querySelector(".nav");
+        if (!nav) return;
+
+        const displayName = user.full_name && user.full_name.trim().length > 0
+            ? user.full_name
+            : (user.email || "User");
+
+        nav.innerHTML = `
+            <span class="nav-hello">Hi, ${displayName} 👋</span>
+            <a href="/" class="nav-link">Trang chủ</a>
+            <a href="#" id="logoutBtn" class="nav-link">Đăng xuất</a>
+        `;
+
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                localStorage.removeItem("user");
+                window.location.href = "/";
+            });
+        }
+    });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Quên mật khẩu{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <section class="card auth-card">
+        <h2 class="title">Quên mật khẩu?</h2>
+        <p class="subtitle">
+            Nhập email, chúng tôi sẽ gửi hướng dẫn khôi phục (demo).
+        </p>
+
+        <form id="forgotForm" class="form">
+            <div class="field">
+                <label for="forgotEmail">Email</label>
+                <input type="email" id="forgotEmail" placeholder="you@example.com" required />
+            </div>
+
+            <button type="submit" class="btn primary full-width">Gửi yêu cầu</button>
+        </form>
+
+        <p id="forgotMessage" class="message"></p>
+
+        <div class="auth-links">
+            <a href="/login">Quay lại đăng nhập</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("forgotForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("forgotEmail").value;
+    const formData = new FormData();
+    formData.append("email", email);
+
+    const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.json();
+    const msg = document.getElementById("forgotMessage");
+
+    if (res.ok) {
+        msg.textContent = data.message;
+        msg.classList.remove("error");
+        msg.classList.add("success");
+    } else {
+        msg.textContent = data.detail || "Có lỗi xảy ra";
+        msg.classList.remove("success");
+        msg.classList.add("error");
+    }
+});
+</script>
+{% endblock %}
