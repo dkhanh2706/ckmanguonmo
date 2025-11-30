@@ -39,12 +39,12 @@
 
     <script src="/static/js/main.js"></script>
 
-    <!-- Script xử lý hiển thị "Hi, tên" sau khi đăng nhập -->
+    <!-- Script: nếu đã đăng nhập -> đổi menu + ẩn CTA guest -->
     <script>
     document.addEventListener("DOMContentLoaded", () => {
         const userJson = localStorage.getItem("user");
         if (!userJson) {
-            return; // chưa đăng nhập -> giữ menu mặc định
+            return; // chưa đăng nhập -> giữ menu + CTA như cũ
         }
 
         let user;
@@ -56,25 +56,32 @@
         }
 
         const nav = document.querySelector(".nav");
-        if (!nav) return;
+        if (nav) {
+            const displayName = user.full_name && user.full_name.trim().length > 0
+                ? user.full_name
+                : (user.email || "User");
 
-        const displayName = user.full_name && user.full_name.trim().length > 0
-            ? user.full_name
-            : (user.email || "User");
+            nav.innerHTML = `
+                <span class="nav-hello">Hi, ${displayName} 👋</span>
+                <a href="/" class="nav-link">Trang chủ</a>
+                <a href="/" class="nav-link">Món ăn</a>
+                <a href="#" id="logoutBtn" class="nav-link">Đăng xuất</a>
+            `;
 
-        nav.innerHTML = `
-            <span class="nav-hello">Hi, ${displayName} 👋</span>
-            <a href="/" class="nav-link">Trang chủ</a>
-            <a href="#" id="logoutBtn" class="nav-link">Đăng xuất</a>
-        `;
+            const logoutBtn = document.getElementById("logoutBtn");
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem("user");
+                    window.location.href = "/";
+                });
+            }
+        }
 
-        const logoutBtn = document.getElementById("logoutBtn");
-        if (logoutBtn) {
-            logoutBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                localStorage.removeItem("user");
-                window.location.href = "/";
-            });
+        // Ẩn CTA dành cho khách (id="guest-cta") nếu đã đăng nhập
+        const guestCta = document.getElementById("guest-cta");
+        if (guestCta) {
+            guestCta.classList.add("hidden");
         }
     });
     </script>
