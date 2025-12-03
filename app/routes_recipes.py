@@ -5,8 +5,10 @@ from app import models
 
 import shutil
 import uuid
+import os
 
-router = APIRouter(prefix="/recipes", tags=["Recipes"])
+# 🔥 ĐỔI prefix thành /api/recipes
+router = APIRouter(prefix="/api/recipes", tags=["recipes"])
 
 UPLOAD_DIR = "static/uploads/"
 
@@ -22,6 +24,9 @@ def create_recipe(
     db: Session = Depends(get_db),
 ):
     file_path = None
+
+    # đảm bảo thư mục upload tồn tại
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
     if image:
         filename = f"{uuid.uuid4().hex}_{image.filename}"
@@ -49,10 +54,9 @@ def create_recipe(
 def list_recipes(
     db: Session = Depends(get_db),
     category: str | None = None,
-    difficulty: str | None = None,
 ):
     query = db.query(models.Recipe)
-    
+
     if category:
         query = query.filter(models.Recipe.category == category)
 

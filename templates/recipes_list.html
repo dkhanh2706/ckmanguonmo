@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="/static/css/recipes.css">
+<section class="container">
+    <div class="page-header">
+        <h2>📚 Thư viện công thức</h2>
+        <a href="/recipes/new" class="btn-primary">+ Thêm công thức</a>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="search" placeholder="Tìm món ăn hoặc nguyên liệu...">
+        <button onclick="searchRecipes()">Tìm kiếm</button>
+    </div>
+
+    <div id="recipe-list" class="recipe-grid">
+        <!-- JS sẽ tự thêm dữ liệu ở đây -->
+    </div>
+</section>
+
+<script src="/static/js/recipes_list.js"></script>
+
+{% endblock %}

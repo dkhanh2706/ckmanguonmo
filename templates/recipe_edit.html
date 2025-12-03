@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="/static/css/recipes.css">
+<section class="container form-section">
+    <h2>✏️ Chỉnh sửa công thức</h2>
+
+    <form id="edit-form">
+
+        <div id="image-preview"></div>
+
+        <label>Tên món</label>
+        <input type="text" name="title" id="title" required>
+
+        <label>Nguyên liệu</label>
+        <textarea name="ingredients" id="ingredients" rows="4" required></textarea>
+
+        <label>Các bước nấu</label>
+        <textarea name="steps" id="steps" rows="6" required></textarea>
+
+        <label>Ghi chú</label>
+        <input type="text" name="note" id="note">
+
+        <label>Danh mục</label>
+        <select name="category" id="category"></select>
+
+        <label>Đổi ảnh mới (tuỳ chọn)</label>
+        <input type="file" name="image" id="image">
+
+    <button type="submit" class="btn-primary">
+    Cập nhật
+    </button>
+
+    </form>
+</section>
+
+<script>
+    const recipeId = "{{ recipe_id }}";
+</script>
+
+<script src="/static/js/recipe_edit.js"></script>
+
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="/static/css/recipes.css">
+<section class="container form-section">
+    <h2>🧑‍🍳 Thêm công thức mới</h2>
+
+    <form id="recipe-form">
+        <label>Tên món</label>
+        <input type="text" name="title" required>
+
+        <label>Nguyên liệu</label>
+        <textarea name="ingredients" rows="4" required></textarea>
+
+        <label>Các bước nấu</label>
+        <textarea name="steps" rows="6" required></textarea>
+
+        <label>Ghi chú (độ khó, thời gian nấu)</label>
+        <input type="text" name="note">
+
+        <label>Danh mục</label>
+        <select name="category">
+            <option value="">-- Chọn --</option>
+            <option>healthy</option>
+            <option>chay</option>
+            <option>keto</option>
+            <option>canh</option>
+            <option>chiên</option>
+            <option>nướng</option>
+        </select>
+
+        <label>Hình ảnh món ăn</label>
+        <input type="file" name="image" accept="image/*">
+
+        <button type="submit" class="btn-primary">Lưu công thức</button>
+    </form>
+</section>
+
+<script src="/static/js/recipe_add.js"></script>
+
+{% endblock %}
