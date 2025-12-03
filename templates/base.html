@@ -1,91 +1,103 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Yuki App{% endblock %}</title>
-
-    <!-- Font kiểu Nhật -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Yuki Meal Planner{% endblock %}</title>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="/static/css/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    {% block head_extra %}{% endblock %}
 </head>
 <body>
     <div class="bg-overlay"></div>
-
+    
     <header class="header">
-        <div class="logo">
-            <span class="logo-mark">雪</span>
-            <span class="logo-text">Yuki Board</span>
-        </div>
-        <nav class="nav">
-            <!-- Menu mặc định khi CHƯA đăng nhập -->
-            <a href="/" class="nav-link">Trang chủ</a>
-            <a href="/login" class="nav-link">Đăng nhập</a>
-            <a href="/register" class="nav-link">Đăng ký</a>
-            <a href="/forgot-password" class="nav-link">Quên mật khẩu</a>
+        <a href="/" class="logo">
+            <div class="logo-mark">雪</div>
+            <span class="logo-text">Yuki Meal Planner</span>
+        </a>
+        
+        <nav class="nav" id="main-nav">
+            <!-- Menu mặc định khi chưa đăng nhập -->
+            <a href="/" class="nav-link"><i class="fas fa-home"></i> Trang chủ</a>
+            <a href="/features" class="nav-link"><i class="fas fa-star"></i> Tính năng</a>
+            <a href="/recipes" class="nav-link"><i class="fas fa-utensils"></i> Công thức</a>
+            <a href="/login" class="nav-link"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a>
+            <a href="/register" class="nav-link"><i class="fas fa-user-plus"></i> Đăng ký</a>
         </nav>
     </header>
-
+    
     <main class="main">
         {% block content %}{% endblock %}
     </main>
-
+    
     <footer class="footer">
-        <span>Made with ☕ &amp; ✨ in Japan style</span>
+        <p>Made with <i class="fas fa-heart" style="color: #ef4444;"></i> & <i class="fas fa-mug-hot" style="color: #7c3aed;"></i> in Japan style</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem;">© 2024 Yuki Meal Planner. All rights reserved.</p>
     </footer>
-
+    
+    <!-- Main JavaScript -->
     <script src="/static/js/main.js"></script>
-
-    <!-- Script: nếu đã đăng nhập -> đổi menu + ẩn CTA guest -->
+    
+    <!-- Dynamic Navigation Script -->
     <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const userJson = localStorage.getItem("user");
-        if (!userJson) {
-            return; // chưa đăng nhập -> giữ menu + CTA như cũ
-        }
-
-        let user;
-        try {
-            user = JSON.parse(userJson);
-        } catch (e) {
-            console.error("Lỗi parse user:", e);
-            return;
-        }
-
-        const nav = document.querySelector(".nav");
-        if (nav) {
-            const displayName = user.full_name && user.full_name.trim().length > 0
-                ? user.full_name
-                : (user.email || "User");
-
-            nav.innerHTML = `
-                <span class="nav-hello">Hi, ${displayName} 👋</span>
-                <a href="/" class="nav-link">Trang chủ</a>
-                <a href="/" class="nav-link">Món ăn</a>
-                <a href="#" id="logoutBtn" class="nav-link">Đăng xuất</a>
-            `;
-
-            const logoutBtn = document.getElementById("logoutBtn");
-            if (logoutBtn) {
-                logoutBtn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    localStorage.removeItem("user");
-                    window.location.href = "/";
-                });
+    document.addEventListener('DOMContentLoaded', function() {
+        const userJson = localStorage.getItem('user');
+        const navElement = document.getElementById('main-nav');
+        
+        if (userJson) {
+            try {
+                const user = JSON.parse(userJson);
+                const displayName = user.full_name?.trim() || user.email || 'Bạn';
+                
+                // Cập nhật navigation cho người đã đăng nhập
+                navElement.innerHTML = `
+                    <span class="nav-hello"><i class="fas fa-user-circle"></i> ${displayName}</span>
+                    <a href="/" class="nav-link"><i class="fas fa-home"></i> Trang chủ</a>
+                    <a href="/dashboard" class="nav-link"><i class="fas fa-calendar-alt"></i> Lịch ăn uống</a>
+                    <a href="/recipes" class="nav-link"><i class="fas fa-book"></i> Công thức</a>
+                    <a href="/shopping-list" class="nav-link"><i class="fas fa-shopping-cart"></i> Mua sắm</a>
+                    <a href="#" id="logoutBtn" class="nav-link"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                `;
+                
+                // Xử lý logout
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        localStorage.removeItem('user');
+                        window.location.href = '/';
+                    });
+                }
+                
+            } catch (e) {
+                console.error('Lỗi khi parse user data:', e);
             }
         }
-
-        // Ẩn CTA dành cho khách (id="guest-cta") nếu đã đăng nhập
-        const guestCta = document.getElementById("guest-cta");
-        if (guestCta) {
-            guestCta.classList.add("hidden");
-        }
+        
+        // Thêm hiệu ứng active cho nav link hiện tại
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.style.color = 'var(--accent)';
+                link.style.background = 'rgba(59, 130, 246, 0.1)';
+            }
+        });
     });
     </script>
-
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>

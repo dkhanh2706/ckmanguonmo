@@ -1,238 +1,267 @@
 {% extends "base.html" %}
 
-{% block title %}Meal Planner – Lên menu hàng ngày{% endblock %}
+{% block title %}Meal Planner – Lên menu hàng ngày thông minh{% endblock %}
 
 {% block content %}
 <div class="page-wrapper home-page">
-
-    <!-- HERO -->
-    <section class="card hero-card home-hero">
-        <div class="home-hero-text">
-            <h1 class="title">Meal Planner – Lên menu hàng ngày 🍱</h1>
-            <p class="subtitle">
-                Lên thực đơn cho cả tuần theo phong cách Nhật: gọn nhẹ, đủ chất, đỡ đau đầu
-                mỗi lần hỏi “Hôm nay ăn gì?”.
-            </p>
-
-            <div class="hero-actions">
-                <a href="/login" class="btn primary">Bắt đầu lên menu hôm nay</a>
-                <a href="/register" class="btn ghost">Tạo tài khoản để lưu thực đơn</a>
-            </div>
-
-            <ul class="home-hero-list">
-                <li>✅ Lên kế hoạch bữa sáng – trưa – tối cho từng ngày trong tuần</li>
-                <li>✅ Lưu công thức yêu thích và tái sử dụng cho tuần sau</li>
-                <li>✅ Tự động gợi ý danh sách nguyên liệu cần mua</li>
-            </ul>
+  <!-- Hero Section -->
+  <section class="card hero-card">
+    <div class="home-hero">
+      <h1 class="title">Meal Planner – Lên menu hàng ngày 🍱</h1>
+      <p class="subtitle">
+        Lên thực đơn cho cả tuần theo phong cách Nhật Bản: gọn nhẹ, đủ dinh dưỡng, 
+        và không còn phải đau đầu với câu hỏi "Hôm nay ăn gì?" mỗi ngày.
+      </p>
+      
+      <div class="hero-actions">
+        <a href="/login" class="btn primary">🎯 Bắt đầu lên menu hôm nay</a>
+        <a href="/register" class="btn ghost">✨ Tạo tài khoản để lưu thực đơn</a>
+      </div>
+      
+      <ul class="home-hero-list">
+        <li>Lập kế hoạch bữa sáng - trưa - tối cho từng ngày trong tuần</li>
+        <li>Lưu trữ công thức yêu thích và tái sử dụng cho tuần sau</li>
+        <li>Tự động tạo danh sách nguyên liệu cần mua sắm</li>
+        <li>Gợi ý món ăn theo chế độ dinh dưỡng và sở thích</li>
+      </ul>
+    </div>
+  </section>
+  
+  <!-- Tính năng nổi bật -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Tính năng nổi bật</h2>
+      <p class="section-subtitle">
+        Những công cụ thông minh giúp việc lập kế hoạch bữa ăn trở nên đơn giản, 
+        tiết kiệm thời gian và tràn đầy cảm hứng.
+      </p>
+    </div>
+    
+    <div class="features-grid">
+      <!-- Feature 1 -->
+      <a href="/features/weekly-planner" class="feature-card-link">
+        <div class="feature-card">
+          <div class="feature-icon">📅</div>
+          <h3 class="feature-title">Lập kế hoạch hàng tuần</h3>
+          <p class="feature-text">
+            Kéo thả món ăn vào từng ngày trong tuần, phân loại theo bữa sáng - trưa - tối 
+            với giao diện trực quan, dễ sử dụng và đẹp mắt.
+          </p>
         </div>
-    </section>
-
-    <!-- TÍNH NĂNG NỔI BẬT -->
-    <section class="section">
-        <div class="section-header">
-            <h2 class="section-title">Tính năng nổi bật</h2>
-            <p class="section-subtitle">
-                Những công cụ giúp việc lập kế hoạch bữa ăn trở nên đơn giản, vui và đỡ tốn thời gian.
-            </p>
+      </a>
+      
+      <!-- Feature 2 -->
+      <a href="/features/recipe-library" class="feature-card-link">
+        <div class="feature-card">
+          <div class="feature-icon">📖</div>
+          <h3 class="feature-title">Thư viện công thức phong phú</h3>
+          <p class="feature-text">
+            Lưu lại công thức yêu thích của bạn, hoặc khám phá gợi ý món ăn theo chủ đề: 
+            healthy, ăn kiêng, cơm gia đình, meal prep Nhật Bản...
+          </p>
         </div>
-
-        <div class="features-grid">
-            <!-- Lập kế hoạch hàng tuần -->
-            <a href="/features/weekly-planner" class="feature-card feature-card-link">
-                <div class="feature-icon">📅</div>
-                <h3 class="feature-title">Lập kế hoạch hàng tuần</h3>
-                <p class="feature-text">
-                    Kéo thả món ăn vào từng ngày trong tuần, theo bữa sáng – trưa – tối
-                    với giao diện trực quan, dễ nhìn.
-                </p>
-            </a>
-
-            <!-- Thư viện công thức -->
-            <a href="/features/recipe-library" class="feature-card feature-card-link">
-                <div class="feature-icon">📖</div>
-                <h3 class="feature-title">Thư viện công thức</h3>
-                <p class="feature-text">
-                    Lưu lại công thức yêu thích của bạn, hoặc tham khảo gợi ý món theo chủ đề:
-                    healthy, ăn kiêng, cơm gia đình, meal prep…
-                </p>
-            </a>
-
-            <!-- Danh sách mua sắm -->
-            <a href="/features/shopping-list" class="feature-card feature-card-link">
-                <div class="feature-icon">🛒</div>
-                <h3 class="feature-title">Danh sách mua sắm</h3>
-                <p class="feature-text">
-                    Hệ thống gom nguyên liệu từ toàn bộ thực đơn trong tuần thành một danh sách mua sắm gọn gàng.
-                </p>
-            </a>
+      </a>
+      
+      <!-- Feature 3 -->
+      <a href="/features/shopping-list" class="feature-card-link">
+        <div class="feature-card">
+          <div class="feature-icon">🛒</div>
+          <h3 class="feature-title">Danh sách mua sắm thông minh</h3>
+          <p class="feature-text">
+            Hệ thống tự động tổng hợp nguyên liệu từ toàn bộ thực đơn trong tuần, 
+            tạo danh sách mua sắm gọn gàng và phân loại theo cửa hàng.
+          </p>
         </div>
-    </section>
-
-    <!-- KẾ HOẠCH BỮA ĂN TRONG TUẦN -->
-    <section class="section">
-        <div class="section-header">
-            <h2 class="section-title">Kế hoạch bữa ăn tuần này</h2>
-            <p class="section-subtitle">
-                Ví dụ một tuần “ăn sạch” nhẹ nhàng – bạn có thể tuỳ chỉnh theo khẩu vị gia đình.
-            </p>
+      </a>
+    </div>
+  </section>
+  
+  <!-- Kế hoạch mẫu tuần này -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Kế hoạch bữa ăn tuần này</h2>
+      <p class="section-subtitle">
+        Ví dụ một tuần ăn uống lành mạnh kiểu Nhật – bạn có thể tùy chỉnh hoàn toàn theo khẩu vị gia đình.
+      </p>
+    </div>
+    
+    <div class="planner-grid">
+      <!-- Thứ 2 -->
+      <div class="planner-day">
+        <div class="planner-day-header">Thứ 2</div>
+        <div class="planner-day-body">
+          <div class="meal-pill">
+            <h4>🍳 Bữa sáng</h4>
+            <p>Bánh mì trứng ốp la + sữa tươi</p>
+          </div>
+          <div class="meal-pill">
+            <h4>🍱 Bữa trưa</h4>
+            <p>Cơm cá hồi áp chảo, salad rong biển</p>
+          </div>
+          <div class="meal-pill">
+            <h4>🍲 Bữa tối</h4>
+            <p>Canh miso, thịt bò xào rau củ kiểu Nhật</p>
+          </div>
         </div>
-
-        <div class="planner-grid">
-            <div class="planner-day">
-                <div class="planner-day-header">Thứ 2</div>
-                <div class="planner-day-body">
-                    <div class="meal-pill">
-                        <h4>Bữa sáng</h4>
-                        <p>Bánh mì trứng ốp la + sữa</p>
-                    </div>
-                    <div class="meal-pill">
-                        <h4>Bữa trưa</h4>
-                        <p>Cơm cá hồi áp chảo, salad</p>
-                    </div>
-                    <div class="meal-pill">
-                        <h4>Bữa tối</h4>
-                        <p>Canh miso, thịt bò xào rau củ</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="planner-day">
-                <div class="planner-day-header">Thứ 3</div>
-                <div class="planner-day-body">
-                    <div class="meal-pill">
-                        <h4>Bữa sáng</h4>
-                        <p>Yogurt + granola + trái cây</p>
-                    </div>
-                    <div class="meal-pill">
-                        <h4>Bữa trưa</h4>
-                        <p>Cơm gà teriyaki, rau luộc</p>
-                    </div>
-                    <div class="meal-pill">
-                        <h4>Bữa tối</h4>
-                        <p>Mì udon nóng</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="planner-day">
-                <div class="planner-day-header">Thứ 4</div>
-                <div class="planner-day-body">
-                    <div class="meal-pill">
-                        <h4>Bữa sáng</h4>
-                        <p>Trà xanh + bánh gạo</p>
-                    </div>
-                    <div class="meal-pill">
-                        <h4>Bữa trưa</h4>
-                        <p>Bento cá saba nướng</p>
-                    </div>
-                    <div class="meal-pill">
-                        <h4>Bữa tối</h4>
-                        <p>Lẩu rau nấm thanh đạm</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="planner-day">
-                <div class="planner-day-header">Thứ 5</div>
-                <div class="planner-day-body">
-                    <div class="meal-pill">
-                        <h4>Bữa sáng</h4>
-                        <p>Trứng luộc + bánh mì nguyên cám</p>
-                    </div>
-                    <div class="meal-pill">
-                        <h4>Bữa trưa</h4>
-                        <p>Bún thịt nướng</p>
-                    </div>
-                    <div class="meal-pill">
-                        <h4>Bữa tối</h4>
-                        <p>Cơm cuộn (onigiri) + súp miso</p>
-                    </div>
-                </div>
-            </div>
+      </div>
+      
+      <!-- Thứ 3 -->
+      <div class="planner-day">
+        <div class="planner-day-header">Thứ 3</div>
+        <div class="planner-day-body">
+          <div class="meal-pill">
+            <h4>🍳 Bữa sáng</h4>
+            <p>Yogurt + granola + trái cây tươi</p>
+          </div>
+          <div class="meal-pill">
+            <h4>🍱 Bữa trưa</h4>
+            <p>Cơm gà teriyaki, rau củ luộc</p>
+          </div>
+          <div class="meal-pill">
+            <h4>🍲 Bữa tối</h4>
+            <p>Mì udon nóng với thịt bò và trứng</p>
+          </div>
         </div>
-    </section>
-
-    <!-- CÔNG THỨC GỢI Ý -->
-    <section class="section">
-        <div class="section-header">
-            <h2 class="section-title">Công thức gợi ý</h2>
-            <p class="section-subtitle">
-                Một vài món “must try” để bạn thêm vào thực đơn tuần.
-            </p>
+      </div>
+      
+      <!-- Thứ 4 -->
+      <div class="planner-day">
+        <div class="planner-day-header">Thứ 4</div>
+        <div class="planner-day-body">
+          <div class="meal-pill">
+            <h4>🍳 Bữa sáng</h4>
+            <p>Trà xanh + bánh gạo Nhật Bản</p>
+          </div>
+          <div class="meal-pill">
+            <h4>🍱 Bữa trưa</h4>
+            <p>Bento cá saba nướng muối</p>
+          </div>
+          <div class="meal-pill">
+            <h4>🍲 Bữa tối</h4>
+            <p>Lẩu rau nấm thanh đạm kiểu Shabu-shabu</p>
+          </div>
         </div>
-
-        <div class="recipes-grid">
-            <article class="recipe-card">
-                <div class="recipe-header">
-                    <h3>Cơm gà teriyaki</h3>
-                    <span class="recipe-tag">30 phút • 2 người</span>
-                </div>
-                <p class="recipe-text">
-                    Thịt gà áp chảo sốt teriyaki ngọt mặn, ăn kèm cơm trắng và salad.
-                </p>
-                <div class="recipe-footer">
-                    <span>🍗 Món chính</span>
-                    <span>⭐ Dễ làm</span>
-                </div>
-            </article>
-
-            <article class="recipe-card">
-                <div class="recipe-header">
-                    <h3>Salad cá hồi</h3>
-                    <span class="recipe-tag">20 phút • 1–2 người</span>
-                </div>
-                <p class="recipe-text">
-                    Cá hồi áp chảo, rau xanh, sốt mè rang – phù hợp cho bữa trưa nhẹ nhàng.
-                </p>
-                <div class="recipe-footer">
-                    <span>🥗 Healthy</span>
-                    <span>🔥 Low-carb</span>
-                </div>
-            </article>
-
-            <article class="recipe-card">
-                <div class="recipe-header">
-                    <h3>Bento cơm cá saba</h3>
-                    <span class="recipe-tag">40 phút • 1 người</span>
-                </div>
-                <p class="recipe-text">
-                    Cơm trắng, cá saba nướng muối, rau luộc, trứng cuộn kiểu Nhật.
-                </p>
-                <div class="recipe-footer">
-                    <span>🍱 Bento</span>
-                    <span>🎒 Mang đi học / đi làm</span>
-                </div>
-            </article>
+      </div>
+      
+      <!-- Thứ 5 -->
+      <div class="planner-day">
+        <div class="planner-day-header">Thứ 5</div>
+        <div class="planner-day-body">
+          <div class="meal-pill">
+            <h4>🍳 Bữa sáng</h4>
+            <p>Trứng luộc + bánh mì nguyên cám</p>
+          </div>
+          <div class="meal-pill">
+            <h4>🍱 Bữa trưa</h4>
+            <p>Bún thịt nướng với rau sống</p>
+          </div>
+          <div class="meal-pill">
+            <h4>🍲 Bữa tối</h4>
+            <p>Cơm cuộn (onigiri) + súp miso đậu hũ</p>
+          </div>
         </div>
-    </section>
-
-    <!-- CTA: CHỈ DÀNH CHO KHÁCH -->
-    <section class="section cta-section card" id="guest-cta">
-        <div class="cta-inner">
-            <h2>Đừng để câu hỏi “Hôm nay ăn gì?” làm bạn stress nữa 😆</h2>
-            <p>
-                Đăng ký tài khoản để lưu thực đơn, công thức và danh sách mua sắm riêng cho gia đình bạn.
-            </p>
-            <div class="hero-actions">
-                <a href="/register" class="btn primary">Đăng ký miễn phí</a>
-                <a href="/login" class="btn ghost">Tôi đã có tài khoản</a>
-            </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Công thức gợi ý -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Công thức gợi ý</h2>
+      <p class="section-subtitle">
+        Một vài món ăn "must try" để bạn thêm vào thực đơn tuần này.
+      </p>
+    </div>
+    
+    <div class="recipes-grid">
+      <!-- Recipe 1 -->
+      <article class="recipe-card">
+        <div class="recipe-header">
+          <h3>🍗 Cơm gà teriyaki</h3>
+          <span class="recipe-tag">30 phút • 2 người</span>
         </div>
-    </section>
-
+        <p class="recipe-text">
+          Thịt gà áp chảo với sốt teriyaki truyền thống Nhật Bản, 
+          ăn kèm cơm trắng và salad rau củ tươi.
+        </p>
+        <div class="recipe-footer">
+          <span>🍚 Món chính</span>
+          <span>⭐ Dễ làm</span>
+        </div>
+      </article>
+      
+      <!-- Recipe 2 -->
+      <article class="recipe-card">
+        <div class="recipe-header">
+          <h3>🥗 Salad cá hồi</h3>
+          <span class="recipe-tag">20 phút • 1–2 người</span>
+        </div>
+        <p class="recipe-text">
+          Cá hồi tươi áp chảo, kết hợp với rau xanh tươi và sốt mè rang – 
+          hoàn hảo cho bữa trưa nhẹ nhàng nhưng đủ chất.
+        </p>
+        <div class="recipe-footer">
+          <span>🥦 Healthy</span>
+          <span>🔥 Low-carb</span>
+        </div>
+      </article>
+      
+      <!-- Recipe 3 -->
+      <article class="recipe-card">
+        <div class="recipe-header">
+          <h3>🍱 Bento cơm cá saba</h3>
+          <span class="recipe-tag">40 phút • 1 người</span>
+        </div>
+        <p class="recipe-text">
+          Cơm trắng dẻo thơm, cá saba nướng muối, rau củ luộc, 
+          trứng cuộn kiểu Nhật – bữa trưa hoàn hảo để mang đi làm.
+        </p>
+        <div class="recipe-footer">
+          <span>🎒 Mang đi làm</span>
+          <span>🇯🇵 Phong cách Nhật</span>
+        </div>
+      </article>
+    </div>
+  </section>
+  
+  <!-- CTA Section -->
+  <section class="section cta-section card" id="guest-cta">
+    <div class="cta-inner">
+      <h2>Đừng để câu hỏi "Hôm nay ăn gì?" làm bạn stress thêm nữa! 😊</h2>
+      <p>
+        Đăng ký tài khoản miễn phí để lưu thực đơn, công thức yêu thích 
+        và danh sách mua sắm riêng cho gia đình bạn.
+      </p>
+      <div class="hero-actions">
+        <a href="/register" class="btn primary">🚀 Đăng ký miễn phí ngay</a>
+        <a href="/login" class="btn ghost">🔓 Tôi đã có tài khoản</a>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const userJson = localStorage.getItem("user");
-    if (!userJson) return;
-
-    const cta = document.getElementById("guest-cta");
-    if (cta) {
-        // Cách 1: xoá hẳn khỏi DOM
-        cta.remove();
-        // hoặc: cta.classList.add("hidden");
+  document.addEventListener('DOMContentLoaded', function() {
+    // Ẩn CTA nếu đã đăng nhập
+    const user = localStorage.getItem('user');
+    if (user) {
+      const ctaSection = document.getElementById('guest-cta');
+      if (ctaSection) {
+        ctaSection.classList.add('hidden');
+      }
     }
-});
+    
+    // Thêm hiệu ứng hover cho feature cards
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-5px)';
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0)';
+      });
+    });
+  });
 </script>
 {% endblock %}

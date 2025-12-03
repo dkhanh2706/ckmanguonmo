@@ -110,7 +110,7 @@ def page_shopping_list():
     </head>
     <body>
         <h1>Danh sách mua sắm</h1>
-        <p>Trang chi tiết Danh sách mua sắm – sẽ phát triển sau.</p>
+        <p>Trang chi tiết Danh sách mua sắm - sẽ phát triển sau.</p>
         <p><a href="/">← Quay lại trang chủ</a></p>
     </body>
     </html>
