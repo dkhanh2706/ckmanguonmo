@@ -1,40 +1,75 @@
 {% extends "base.html" %}
+{% block title %}Thêm công thức mới{% endblock %}
+
 {% block content %}
 
-<link rel="stylesheet" href="/static/css/recipes.css">
-<section class="container form-section">
-    <h2>🧑‍🍳 Thêm công thức mới</h2>
+<div class="form-section">
+    <h2>👩‍🍳 Thêm công thức mới</h2>
+    <p class="section-subtitle" style="color:#64748b; margin-bottom:12px;">
+        Điền đầy đủ thông tin món ăn để lưu vào thư viện công thức của bạn.
+    </p>
 
-    <form id="recipe-form">
-        <label>Tên món</label>
-        <input type="text" name="title" required>
+    <form id="recipe-form" enctype="multipart/form-data">
+        <!-- Tên món -->
+        <label for="title">Tên món</label>
+        <input
+            type="text"
+            id="title"
+            name="title"
+            placeholder="Ví dụ: Cơm chiên trứng"
+            required
+        />
 
-        <label>Nguyên liệu</label>
-        <textarea name="ingredients" rows="4" required></textarea>
+        <!-- Nguyên liệu -->
+        <label for="ingredients">Nguyên liệu</label>
+        <textarea
+            id="ingredients"
+            name="ingredients"
+            rows="4"
+            placeholder="Liệt kê nguyên liệu, mỗi nguyên liệu cách nhau bằng dấu chấm phẩy ;"
+            required
+        ></textarea>
 
-        <label>Các bước nấu</label>
-        <textarea name="steps" rows="6" required></textarea>
+        <!-- Các bước nấu -->
+        <label for="steps">Các bước nấu</label>
+        <textarea
+            id="steps"
+            name="steps"
+            rows="5"
+            placeholder="Mô tả từng bước nấu ăn..."
+            required
+        ></textarea>
 
-        <label>Ghi chú (độ khó, thời gian nấu)</label>
-        <input type="text" name="note">
+        <!-- Ghi chú -->
+        <label for="note">Ghi chú (độ khó, thời gian nấu)</label>
+        <input
+            type="text"
+            id="note"
+            name="note"
+            placeholder="Ví dụ: 20 phút, dễ"
+        />
 
-        <label>Danh mục</label>
-        <select name="category">
+        <!-- Danh mục -->
+        <label for="category">Danh mục</label>
+        <select id="category" name="category">
             <option value="">-- Chọn --</option>
-            <option>healthy</option>
-            <option>chay</option>
-            <option>keto</option>
-            <option>canh</option>
-            <option>chiên</option>
-            <option>nướng</option>
+            <option value="canh">Canh</option>
+            <option value="chiên">Chiên</option>
+            <option value="nướng">Nướng</option>
+            <option value="xào">Xào</option>
+            <option value="healthy">Healthy</option>
+            <option value="chay">Món chay</option>
         </select>
 
-        <label>Hình ảnh món ăn</label>
-        <input type="file" name="image" accept="image/*">
+        <!-- Hình ảnh -->
+        <label for="image">Hình ảnh món ăn (tuỳ chọn)</label>
+        <div id="image-preview"></div>
+        <input type="file" id="image" name="image" accept="image/*" />
 
-        <button type="submit" class="btn-primary">Lưu công thức</button>
+        <!-- Nút lưu -->
+        <button type="button" id="btn-save">Lưu công thức</button>
     </form>
-</section>
+</div>
 
 <script src="/static/js/recipe_add.js"></script>
 

@@ -1,23 +1,62 @@
 {% extends "base.html" %}
+{% block title %}Thư viện công thức{% endblock %}
 {% block content %}
 
-<link rel="stylesheet" href="/static/css/recipes.css">
-<section class="container">
-    <div class="page-header">
-        <h2>📚 Thư viện công thức</h2>
-        <a href="/recipes/new" class="btn-primary">+ Thêm công thức</a>
+<div class="page-recipes">
+  <!-- HERO / SEARCH -->
+  <section class="recipes-hero">
+    <div class="hero-left">
+      <h1 class="page-title">📚 Thư viện công thức</h1>
+      <p class="page-subtitle">
+        Tìm kiếm, tham khảo các món ăn gợi ý và lưu lại công thức của riêng bạn.
+      </p>
     </div>
+    <div class="hero-actions">
+      <a href="/recipes/new" class="btn-primary">+ Thêm công thức</a>
+    </div>
+  </section>
 
-    <div class="search-box">
-        <input type="text" id="search" placeholder="Tìm món ăn hoặc nguyên liệu...">
-        <button onclick="searchRecipes()">Tìm kiếm</button>
-    </div>
+  <section class="recipes-search">
+    <form id="recipe-search-form" class="search-bar" onsubmit="return false;">
+      <input
+        id="search-input"
+        type="text"
+        class="search-input"
+        placeholder="Tìm món ăn hoặc nguyên liệu..."
+      />
+      <button type="button" id="btn-search" class="btn-secondary">
+        Tìm kiếm
+      </button>
+    </form>
+  </section>
 
-    <div id="recipe-list" class="recipe-grid">
-        <!-- JS sẽ tự thêm dữ liệu ở đây -->
+  <!-- 1. CÔNG THỨC GỢI Ý SẴN -->
+  <section class="recipes-section">
+    <div class="section-header">
+      <h2>🌟 Công thức gợi ý từ hệ thống</h2>
+      <p class="section-subtitle">
+        Một vài công thức có sẵn để bạn tham khảo nhanh. Các công thức này không
+        thể chỉnh sửa.
+      </p>
     </div>
-</section>
+    <div id="default-recipes-list" class="recipe-grid">
+      <!-- JS sẽ render card gợi ý ở đây -->
+    </div>
+  </section>
+
+  <!-- 2. CÔNG THỨC CỦA BẠN -->
+  <section class="recipes-section">
+    <div class="section-header">
+      <h2>🍳 Công thức của bạn</h2>
+      <p class="section-subtitle" id="user-recipes-empty" style="display: none">
+        Chưa có công thức nào. Hãy thêm một món mới nhé 👩‍🍳
+      </p>
+    </div>
+    <div id="user-recipes-list" class="recipe-grid">
+      <!-- JS sẽ render công thức user ở đây -->
+    </div>
+  </section>
+</div>
 
 <script src="/static/js/recipes_list.js"></script>
-
 {% endblock %}

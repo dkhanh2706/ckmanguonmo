@@ -5,25 +5,29 @@ from fastapi.templating import Jinja2Templates
 
 from .database import Base, engine, SessionLocal
 from . import models
+
 from .routes_auth import router as auth_router
 from .routes_recipes import router as recipes_router
+from .routes_default_recipes import router as default_recipes_router
 
 
 # ============================
-#   KHỞI TẠO DATABASE
+#   KHỞI TẠO APP + DATABASE
 # ============================
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI()
 
+Base.metadata.create_all(bind=engine)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
 # ============================
-#   SEED DATA (món có sẵn)
+#   SEED DATA (món user có thể sửa/xóa)
 # ============================
 @app.on_event("startup")
 def seed_sample_recipes():
     db = SessionLocal()
     try:
-        # chỉ seed nếu chưa có dữ liệu
         count = db.query(models.Recipe).count()
         if count == 0:
             sample_recipes = [
@@ -73,20 +77,18 @@ def seed_sample_recipes():
 
 
 # ============================
-#   KHỞI TẠO FASTAPI
+#   STATIC & TEMPLATES
 # ============================
-
-
-# Static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Templates
 templates = Jinja2Templates(directory="templates")
 
 
-# Routers API
+# ============================
+#   API ROUTERS
+# ============================
 app.include_router(auth_router)
 app.include_router(recipes_router)
+app.include_router(default_recipes_router)
 
 
 # ============================
