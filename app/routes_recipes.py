@@ -7,12 +7,24 @@ import shutil
 import uuid
 import os
 
-# 🔥 ĐỔI prefix thành /api/recipes
-router = APIRouter(prefix="/api/recipes", tags=["recipes"])
+# API PREFIX
+router = APIRouter(prefix="/api/recipes", tags=["Recipes"])
 
-UPLOAD_DIR = "static/uploads/"
+# Thư mục lưu file trên server
+UPLOAD_DIR = "static/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+# Tạo URL hiển thị ảnh cho front-end
+def make_image_url(filename: str | None):
+    if not filename:
+        return None
+    return f"/static/uploads/{filename}"
+
+
+# =========================================
+# CREATE
+# =========================================
 @router.post("/")
 def create_recipe(
     title: str = Form(...),
@@ -23,14 +35,14 @@ def create_recipe(
     image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    file_path = None
 
-    # đảm bảo thư mục upload tồn tại
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    saved_filename = None
 
+    # Lưu file ảnh nếu có upload
     if image:
-        filename = f"{uuid.uuid4().hex}_{image.filename}"
-        file_path = UPLOAD_DIR + filename
+        saved_filename = f"{uuid.uuid4().hex}_{image.filename}"
+        file_path = os.path.join(UPLOAD_DIR, saved_filename)
+
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
 
@@ -40,34 +52,75 @@ def create_recipe(
         steps=steps,
         note=note,
         category=category,
-        image=file_path,
+        image=saved_filename,       # LƯU TÊN FILE, KHÔNG LƯU ĐƯỜNG DẪN
     )
 
     db.add(recipe)
     db.commit()
     db.refresh(recipe)
 
-    return {"message": "Created", "data": recipe}
+    return {
+        "message": "Created",
+        "data": {
+            "id": recipe.id,
+            "title": recipe.title,
+            "image": make_image_url(recipe.image)
+        }
+    }
 
 
+# =========================================
+# READ ALL
+# =========================================
 @router.get("/")
-def list_recipes(
-    db: Session = Depends(get_db),
-    category: str | None = None,
-):
+def list_recipes(db: Session = Depends(get_db), category: str | None = None):
+
     query = db.query(models.Recipe)
 
     if category:
         query = query.filter(models.Recipe.category == category)
 
-    return query.all()
+    recipes = query.all()
+
+    # Convert image → URL
+    result = []
+    for r in recipes:
+        result.append({
+            "id": r.id,
+            "title": r.title,
+            "ingredients": r.ingredients,
+            "steps": r.steps,
+            "note": r.note,
+            "category": r.category,
+            "image": make_image_url(r.image)
+        })
+
+    return result
 
 
+# =========================================
+# READ ONE
+# =========================================
 @router.get("/{recipe_id}")
 def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
+    r = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
+    if not r:
+        return {"message": "Not found"}
+
+    return {
+        "id": r.id,
+        "title": r.title,
+        "ingredients": r.ingredients,
+        "steps": r.steps,
+        "note": r.note,
+        "category": r.category,
+        "image": make_image_url(r.image),
+    }
 
 
+# =========================================
+# UPDATE
+# =========================================
 @router.put("/{recipe_id}")
 def update_recipe(
     recipe_id: int,
@@ -79,8 +132,8 @@ def update_recipe(
     image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    recipe = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
 
+    recipe = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
     if not recipe:
         return {"message": "Not found"}
 
@@ -90,23 +143,31 @@ def update_recipe(
     recipe.note = note
     recipe.category = category
 
+    # Cập nhật ảnh nếu có file mới
     if image:
-        filename = f"{uuid.uuid4().hex}_{image.filename}"
-        file_path = UPLOAD_DIR + filename
+        new_filename = f"{uuid.uuid4().hex}_{image.filename}"
+        file_path = os.path.join(UPLOAD_DIR, new_filename)
+
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        recipe.image = file_path
+
+        recipe.image = new_filename
 
     db.commit()
     db.refresh(recipe)
 
-    return {"message": "Updated", "data": recipe}
+    return {"message": "Updated", "image": make_image_url(recipe.image)}
 
 
+# =========================================
+# DELETE
+# =========================================
 @router.delete("/{recipe_id}")
 def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
     recipe = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
-    if recipe:
-        db.delete(recipe)
-        db.commit()
+    if not recipe:
+        return {"message": "Not found"}
+
+    db.delete(recipe)
+    db.commit()
     return {"message": "Deleted"}

@@ -1,40 +1,25 @@
-// static/js/recipe_add.js
-
-const API_BASE = "/api/recipes";
-
-document.addEventListener("DOMContentLoaded", () => {
+document.getElementById("btn-save").addEventListener("click", async () => {
     const form = document.getElementById("recipe-form");
-    if (!form) return;
-
-    form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        submitRecipe();
-    });
-});
-
-async function submitRecipe() {
-    const form = document.getElementById("recipe-form");
-    if (!form) return;
-
     const formData = new FormData(form);
 
     try {
-        const res = await fetch(API_BASE, {
+        const res = await fetch("/api/recipes", {
             method: "POST",
             body: formData
         });
 
+        const data = await res.json();
+        console.log("Server response:", data);
+
         if (!res.ok) {
-            const text = await res.text();
-            console.error(text);
-            alert("Thêm công thức thất bại. Kiểm tra lại dữ liệu.");
+            alert("❌ Lỗi server: " + (data.detail || "Không rõ lỗi"));
             return;
         }
 
-        alert("Đã thêm công thức thành công! 🎉");
+        alert("✅ Đã lưu công thức thành công!");
         window.location.href = "/recipes";
     } catch (err) {
-        console.error(err);
-        alert("Có lỗi kết nối tới server.");
+        console.error("Lỗi khi gửi request:", err);
+        alert("⚠️ Không thể kết nối đến server.");
     }
-}
+});

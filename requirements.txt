@@ -48,3 +48,4 @@ python-dotenv
 sqlalchemy
 alembic
 passlib[bcrypt]
+
