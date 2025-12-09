@@ -11,6 +11,7 @@ router = APIRouter(
     tags=["Auth"],
 )
 
+
 @router.post("/register", response_model=schemas.UserOut)
 def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.email == user_in.email).first()
@@ -40,6 +41,7 @@ def login(data: schemas.UserLogin, db: Session = Depends(get_db)):
             detail="Sai email hoặc mật khẩu",
         )
 
+    # Trả JSON cho frontend lưu localStorage
     return {
         "message": "Đăng nhập thành công",
         "user": {"id": user.id, "email": user.email, "full_name": user.full_name},
@@ -54,4 +56,6 @@ def forgot_password(email: str, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Không tìm thấy tài khoản với email này",
         )
-    return {"message": "Nếu email tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi (demo)."}
+    return {
+        "message": "Nếu email tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi (demo)."
+    }

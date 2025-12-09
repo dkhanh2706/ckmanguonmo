@@ -10,7 +10,6 @@ from .routes_auth import router as auth_router
 from .routes_recipes import router as recipes_router
 from .routes_default_recipes import router as default_recipes_router
 
-
 # ============================
 #   KHỞI TẠO APP + DATABASE
 # ============================
@@ -18,11 +17,13 @@ app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
+# STATIC & TEMPLATE
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+
 # ============================
-#   SEED DATA (món user có thể sửa/xóa)
+#   SEED DATA DEMO
 # ============================
 @app.on_event("startup")
 def seed_sample_recipes():
@@ -77,13 +78,6 @@ def seed_sample_recipes():
 
 
 # ============================
-#   STATIC & TEMPLATES
-# ============================
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
-
-# ============================
 #   API ROUTERS
 # ============================
 app.include_router(auth_router)
@@ -92,9 +86,8 @@ app.include_router(default_recipes_router)
 
 
 # ============================
-#      HTML PAGES
+#   HTML PAGES
 # ============================
-
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -115,8 +108,7 @@ def page_forgot(request: Request):
     return templates.TemplateResponse("forgot.html", {"request": request})
 
 
-# ===== RECIPES CRUD PAGES =====
-
+# ===== PAGES CHO RECIPES =====
 @app.get("/recipes", response_class=HTMLResponse)
 def page_recipes(request: Request):
     return templates.TemplateResponse("recipes_list.html", {"request": request})
@@ -135,8 +127,7 @@ def page_recipe_edit(request: Request, recipe_id: int):
     )
 
 
-# ===== FEATURE PAGES =====
-
+# ===== PAGES TÍNH NĂNG KHÁC (demo) =====
 @app.get("/features/weekly-planner", response_class=HTMLResponse)
 def page_weekly_planner():
     return HTMLResponse(

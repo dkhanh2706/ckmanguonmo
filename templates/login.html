@@ -3,70 +3,97 @@
 
 {% block content %}
 <div class="page-wrapper">
-    <section class="card auth-card">
-        <h2 class="title">Đăng nhập</h2>
-        <p class="subtitle">Chào mừng trở lại</p>
+  <section class="card auth-card">
+    <h2 class="title">Đăng nhập</h2>
+    <p class="subtitle">Chào mừng bạn quay lại với Yuki Meal Planner</p>
 
-        <form id="loginForm" class="form">
-            <div class="field">
-                <label for="loginEmail">Email</label>
-                <input type="email" id="loginEmail" placeholder="you@example.com" required />
-            </div>
+    <form id="loginForm" class="form">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input
+          type="email"
+          id="loginEmail"
+          placeholder="you@example.com"
+          required
+        />
+      </div>
 
-            <div class="field">
-                <label for="loginPassword">Mật khẩu</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" required />
-            </div>
+      <div class="field">
+        <label for="loginPassword">Mật khẩu</label>
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="••••••••"
+          required
+        />
+      </div>
 
-            <button type="submit" class="btn primary full-width">Đăng nhập</button>
-        </form>
+      <button type="submit" class="btn primary full-width">Đăng nhập</button>
 
-        <p id="loginMessage" class="message"></p>
+      <p class="form-text">
+        Chưa có tài khoản?
+        <a href="/register">Đăng ký ngay</a>
+      </p>
+      <p class="form-text">
+        <a href="/forgot-password">Quên mật khẩu?</a>
+      </p>
 
-        <div class="auth-links">
-            <a href="/forgot-password">Quên mật khẩu?</a>
-            <span>•</span>
-            <a href="/register">Chưa có tài khoản?</a>
-        </div>
-    </section>
+      <p id="loginMessage" class="form-message"></p>
+    </form>
+  </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
-
-    const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("loginForm");
+    const emailInput = document.getElementById("loginEmail");
+    const passwordInput = document.getElementById("loginPassword");
     const msg = document.getElementById("loginMessage");
 
-    if (res.ok) {
-        // 🚀 Lưu thông tin user vào localStorage
-        if (data.user) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      msg.textContent = "Đang đăng nhập...";
+      msg.classList.remove("error", "success");
+
+      try {
+        const resp = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: emailInput.value.trim(),
+            password: passwordInput.value,
+          }),
+        });
+
+        const data = await resp.json();
+
+        if (resp.ok) {
+          // Lưu user vào localStorage
+          if (data.user) {
             localStorage.setItem("user", JSON.stringify(data.user));
-        }
+          }
 
-        msg.textContent = "Đăng nhập thành công!";
-        msg.classList.remove("error");
-        msg.classList.add("success");
+          msg.textContent = "Đăng nhập thành công! Đang chuyển hướng...";
+          msg.classList.add("success");
 
-        setTimeout(() => {
+          setTimeout(() => {
             window.location.href = "/";
-        }, 800);
-    } else {
-        msg.textContent = data.detail || "Đăng nhập thất bại";
-        msg.classList.remove("success");
+          }, 800);
+        } else {
+          msg.textContent = data.detail || "Đăng nhập thất bại";
+          msg.classList.add("error");
+        }
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "Có lỗi xảy ra, vui lòng thử lại.";
         msg.classList.add("error");
-    }
-});
+      }
+    });
+  });
 </script>
 {% endblock %}

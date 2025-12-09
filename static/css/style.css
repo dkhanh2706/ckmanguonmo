@@ -24,7 +24,8 @@
 }
 
 body {
-  font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
   color: var(--text-main);
   min-height: 100vh;
@@ -37,9 +38,16 @@ body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image: 
-    radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 85% 75%, rgba(249, 168, 212, 0.08) 0%, transparent 50%);
+  background-image: radial-gradient(
+      circle at 15% 25%,
+      rgba(59, 130, 246, 0.08) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 85% 75%,
+      rgba(249, 168, 212, 0.08) 0%,
+      transparent 50%
+    );
   z-index: -1;
 }
 
@@ -174,8 +182,12 @@ body {
 .hero-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
-  border: 1px solid rgba(255,255,255,0.3);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.8)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .hero-card::before {
@@ -185,7 +197,11 @@ body {
   right: -30%;
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.1),
+    transparent 70%
+  );
   border-radius: 50%;
 }
 
@@ -196,7 +212,11 @@ body {
   left: -10%;
   width: 200px;
   height: 200px;
-  background: radial-gradient(circle, rgba(249, 168, 212, 0.1) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(249, 168, 212, 0.1),
+    transparent 70%
+  );
   border-radius: 50%;
 }
 
@@ -243,7 +263,12 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -293,30 +318,36 @@ body {
   flex-wrap: wrap;
 }
 
+/* ===== HERO – LIST LỢI ÍCH ===== */
 .home-hero-list {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  padding: 0; /* bỏ thụt lề & chấm mặc định */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.9rem;
 }
 
 .home-hero-list li {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.9rem;
   color: var(--text-muted);
-  font-size: 1rem;
+  font-size: 0.95rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
 .home-hero-list li::before {
   content: "✓";
   color: var(--accent);
-  font-weight: bold;
+  font-weight: 600;
   background: rgba(59, 130, 246, 0.1);
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -528,7 +559,11 @@ body {
   text-align: center;
   padding: 3rem 2rem;
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(249, 168, 212, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(249, 168, 212, 0.1)
+  );
   border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
@@ -545,6 +580,12 @@ body {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
 }
 
 /* Form Styles */
@@ -617,30 +658,30 @@ body {
     gap: 1rem;
     padding: 1rem;
   }
-  
+
   .nav {
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.75rem;
   }
-  
+
   .title {
     font-size: 2rem;
   }
-  
+
   .hero-actions {
     flex-direction: column;
   }
-  
+
   .btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .card {
     padding: 1.5rem;
   }
-  
+
   .features-grid,
   .planner-grid,
   .recipes-grid {
@@ -652,12 +693,406 @@ body {
   .main {
     padding: 1rem;
   }
-  
+
   .title {
     font-size: 1.75rem;
   }
-  
+
   .section-title {
     font-size: 1.5rem;
+  }
+}
+
+/* ===== SECTION TOOLS (Feature links at bottom of home) ===== */
+.section-tools {
+  margin-top: 3rem;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.75rem;
+}
+
+.tool-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.6rem 1.4rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    135deg,
+    rgba(239, 246, 255, 0.95),
+    rgba(255, 255, 255, 0.95)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: var(--shadow-soft);
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.tool-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at top right,
+    rgba(59, 130, 246, 0.06),
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.tool-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.tool-card:hover::after {
+  opacity: 1;
+}
+
+.tool-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-pink));
+  color: #fff;
+  font-size: 1.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.tool-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.tool-text {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.tool-link {
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .section-tools {
+    margin-top: 2.5rem;
+  }
+}
+
+/* Hàng ngang icon + nội dung trong 2 section tính năng */
+.feature-row {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.feature-icon {
+  font-size: 40px;
+  line-height: 1;
+  margin-top: 4px;
+}
+
+.feature-content {
+  flex: 1;
+}
+
+/* Khung bao quanh list ở hero */
+.hero-benefits-box {
+  margin-top: 1.8rem;
+  padding: 1.25rem 1.5rem;
+  max-width: 520px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+/* List chỉ áp dụng cho hero – không ảnh hưởng ul/li chỗ khác */
+.home-hero-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.home-hero-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+}
+
+/* Icon tròn trước mỗi dòng */
+.home-hero-list li::before {
+  content: "✓";
+  color: var(--accent);
+  font-weight: 600;
+  background: rgba(59, 130, 246, 0.1);
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* === BỔ SUNG GIAO DIỆN TRANG CHỦ (HOME) === */
+
+/* Hero layout: chia 2 cột cho phần giới thiệu và stats */
+.hero-card {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+  gap: 2.5rem;
+  align-items: flex-start;
+}
+
+/* Cột phải của hero */
+.home-hero-aside {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Thẻ thống kê nhỏ bên phải */
+.hero-stats-card {
+  background: linear-gradient(135deg, #eff6ff, #fefce8);
+  border-radius: 18px;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+}
+
+.hero-stats-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.hero-stats-grid {
+  display: flex;
+  gap: 1rem;
+}
+
+.hero-stat-item {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 14px;
+  padding: 0.55rem 0.7rem;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.hero-stat-number {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 0.15rem;
+}
+
+.hero-stat-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Khung gợi ý hôm nay */
+.hero-mini-card {
+  margin-top: 1rem;
+  padding: 1rem 1.2rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px dashed rgba(148, 163, 184, 0.8);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
+}
+
+.hero-mini-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.hero-menu-list {
+  list-style: none;
+  margin: 0 0 0.75rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.hero-menu-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.hero-menu-list .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.hero-mini-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.hero-mini-link:hover {
+  text-decoration: underline;
+}
+
+/* Phần giới thiệu "Hôm nay ăn gì" */
+.section-intro {
+  padding: 2.5rem 2rem 3rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    135deg,
+    rgba(239, 246, 255, 0.9),
+    rgba(255, 255, 255, 0.95)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* 3 thẻ lợi ích */
+.info-grid {
+  margin-top: 1.6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.4rem;
+}
+
+.info-card {
+  padding: 1.5rem 1.6rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+}
+
+.info-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.info-text {
+  font-size: 0.98rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Section cách hoạt động */
+.section-how {
+  padding-top: 0;
+}
+
+.how-steps {
+  margin-top: 1.8rem;
+  display: grid;
+  gap: 1.2rem;
+}
+
+.how-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.2rem 1.3rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.how-step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-pink));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.how-step-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.how-step-text {
+  font-size: 0.96rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* List gạch đầu dòng trong các block tính năng */
+.feature-list {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.feature-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.feature-list li::before {
+  content: "•";
+  font-size: 1.1rem;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+/* Responsive cho hero layout mới */
+@media (max-width: 900px) {
+  .hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero-aside {
+    margin-top: 1rem;
   }
 }
