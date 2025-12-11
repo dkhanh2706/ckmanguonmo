@@ -1,0 +1,43 @@
+{% extends "base.html" %} {% block content %}
+
+<link rel="stylesheet" href="/static/css/recipes.css" />
+<section class="container form-section">
+  <h2>✏️ Chỉnh sửa công thức</h2>
+
+  <form id="edit-form" enctype="multipart/form-data">
+    <div id="image-preview"></div>
+
+    <label for="title">Tên món</label>
+    <input type="text" name="title" id="title" required />
+
+    <label for="ingredients">Nguyên liệu</label>
+    <textarea name="ingredients" id="ingredients" rows="4" required></textarea>
+
+    <label for="steps">Các bước nấu</label>
+    <textarea name="steps" id="steps" rows="6" required></textarea>
+
+    <label for="note">Ghi chú</label>
+    <input type="text" name="note" id="note" />
+
+    <label for="category">Danh mục</label>
+    <select name="category" id="category">
+      <option value="">-- Chọn --</option>
+      <option value="canh">Canh</option>
+      <option value="chiên">Chiên</option>
+      <option value="nướng">Nướng</option>
+      <option value="xào">Xào</option>
+      <option value="healthy">Healthy</option>
+      <option value="chay">Món chay</option>
+    </select>
+
+    <label for="image">Đổi ảnh mới (tuỳ chọn)</label>
+    <input type="file" name="image" id="image" accept="image/*" />
+
+    <button type="submit" class="btn-primary">Cập nhật</button>
+  </form>
+</section>
+
+<!-- ❗ CHỈ CÒN SCRIPT NÀY, KHÔNG CÓ const recipeId NỮA -->
+<script src="/static/js/recipe_edit.js"></script>
+
+{% endblock %}
