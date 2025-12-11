@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}
+Lịch ăn uống hằng tuần – Yuki Meal Planner
+{% endblock %}
+
+{% block content %}
+
+<style>
+  .planner-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 8px 48px;
+  }
+
+  .planner-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .planner-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .planner-title span.emoji {
+    font-size: 1.6rem;
+  }
+
+  .planner-subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #64748b;
+  }
+
+  .planner-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .planner-toolbar-left {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .planner-toolbar button {
+    border-radius: 999px;
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.1s;
+  }
+
+  .planner-toolbar button:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(148, 163, 184, 0.4);
+  }
+
+  .planner-toolbar button:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  .week-label {
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 500;
+  }
+
+  /* ===== Calendar ===== */
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(7, 1fr);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    margin-bottom: 24px;
+  }
+
+  .calendar-header {
+    background: #f1f5f9;
+    padding: 10px 6px;
+    text-align: center;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.85rem;
+  }
+
+  .calendar-header span.date {
+    display: block;
+    font-size: 0.9rem;
+    color: #0f172a;
+  }
+
+  .calendar-header span.iso {
+    display: block;
+    font-size: 0.72rem;
+    color: #94a3b8;
+  }
+
+  .calendar-slot-label {
+    background: #f8fafc;
+    padding: 12px 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .calendar-cell {
+    min-height: 80px;
+    padding: 6px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    background: #ffffff;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .calendar-cell:hover {
+    background: #f8fafc;
+  }
+
+  .calendar-grid > div:nth-child(8n) {
+    border-right: none;
+  }
+
+  .calendar-cell.highlight-drop {
+    outline: 2px dashed #22c55e;
+    outline-offset: -3px;
+    background: #f0fdf4 !important;
+  }
+
+  .meal-tag {
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 999px;
+    margin-bottom: 3px;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .meal-tag.student {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .meal-tag.gym {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  /* ===== Recipe lists ===== */
+  .planner-section-title {
+    margin-top: 8px;
+    margin-bottom: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .small-muted {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 8px;
+  }
+
+  .recipes-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .recipe-card {
+    border-radius: 12px;
+    padding: 10px 10px 9px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+    cursor: grab;
+    transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+  }
+
+  .recipe-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+    border-color: #bfdbfe;
+  }
+
+  .recipe-card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: #0f172a;
+  }
+
+  .recipe-card-note {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background: #f3f4f6;
+    color: #4b5563;
+    margin-top: 2px;
+  }
+
+  @media (max-width: 900px) {
+    .calendar-grid {
+      font-size: 0.75rem;
+    }
+
+    .calendar-slot-label {
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+<div class="planner-container">
+  <div class="planner-header-row">
+    <div>
+      <div class="planner-title">
+        <span class="emoji">📅</span>
+        <span>Lịch ăn uống hằng tuần</span>
+      </div>
+      <p class="planner-subtitle">
+        Lên kế hoạch bữa ăn cho sinh viên & người tập gym bằng cách kéo công thức vào từng ngày, từng bữa.
+      </p>
+    </div>
+  </div>
+
+  <!-- Thanh điều khiển lịch -->
+  <div class="planner-toolbar">
+    <div class="planner-toolbar-left">
+      <button id="prev-week-btn">
+        <i class="fa-solid fa-chevron-left"></i>
+        Tuần trước
+      </button>
+      <button id="today-week-btn">
+        <i class="fa-regular fa-calendar-check"></i>
+        Tuần hiện tại
+      </button>
+      <button id="next-week-btn">
+        Tuần sau
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+    <div class="week-label" id="week-range-label"></div>
+  </div>
+
+  <!-- BẢNG LỊCH TUẦN -->
+  <div id="calendar-root"></div>
+
+  <!-- DANH SÁCH MÓN: SINH VIÊN -->
+  <h3 class="planner-section-title">
+    <span>🍚</span>
+    <span>Món cho sinh viên ở trọ</span>
+  </h3>
+  <p class="small-muted">
+    Kéo món từ danh sách này và thả vào ô <strong>Bữa sáng / Bữa trưa / Bữa tối</strong> trên lịch.
+  </p>
+  <div id="student-recipes" class="recipes-list"></div>
+
+  <!-- DANH SÁCH MÓN: GYM / EAT CLEAN -->
+  <h3 class="planner-section-title">
+    <span>💪</span>
+    <span>Món cho Gym / Eat clean</span>
+  </h3>
+  <p class="small-muted">
+    Các món có <code>category = "healthy"</code>. Kéo thả lên lịch như bình thường để lên thực đơn giảm cân / tăng cơ.
+  </p>
+  <div id="gym-recipes" class="recipes-list"></div>
+</div>
+
+<script src="/static/js/meal_planner.js"></script>
+
+{% endblock %}

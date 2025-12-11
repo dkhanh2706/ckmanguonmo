@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Yuki Meal Planner{% endblock %}</title>
+
+    <title>
+      {% block title %}
+      {% if page_title %}{{ page_title }} – Yuki Meal Planner{% else %}Yuki Meal Planner{% endif %}
+      {% endblock %}
+    </title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,6 +28,82 @@
     <link rel="stylesheet" href="/static/css/style.css" />
     <!-- CSS cho trang công thức (nếu không dùng vẫn không sao) -->
     <link rel="stylesheet" href="/static/css/recipes.css" />
+
+    <!-- Page header nhỏ, áp dụng cho mọi trang -->
+    <style>
+      body {
+        background: radial-gradient(circle at top, #e0f2fe 0, #f9fafb 40%, #f3f4f6 100%);
+        font-family: "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      .page-hero {
+        width: min(1400px, 100% - 40px);
+        margin: 80px auto 16px;
+        padding: 18px 22px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+        border: 1px solid #bfdbfe;
+        box-shadow: 0 10px 25px rgba(30, 64, 175, 0.12);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .main {
+        width: min(1400px, 100% - 40px);
+        margin: 0 auto 40px;
+        padding: 0 0 40px;
+      }
+
+
+      .page-hero-main {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .page-hero-title {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1d4ed8;
+      }
+
+      .page-hero-subtitle {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #475569;
+      }
+
+      .page-hero-badge {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.05);
+        color: #0f172a;
+        font-size: 0.75rem;
+      }
+
+      @media (max-width: 768px) {
+        .page-hero {
+          margin-top: 72px;
+          padding: 14px 14px;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .page-hero-title {
+          font-size: 1.3rem;
+        }
+      }
+
+      .main {
+        max-width: 1200px;
+        margin: 0 auto 40px;
+        padding: 0 12px 40px;
+      }
+    </style>
 
     {% block head_extra %}{% endblock %}
   </head>
@@ -61,6 +142,28 @@
         </a>
       </nav>
     </header>
+
+    <!-- ================ PAGE HERO (TIÊU ĐỀ TRANG) ================ -->
+    {% if page_title %}
+    <section class="page-hero">
+      <div class="page-hero-main">
+        <h1 class="page-hero-title">{{ page_title }}</h1>
+        <p class="page-hero-subtitle">
+          {% if page_title == "Lịch ăn uống hằng tuần" %}
+          Lên kế hoạch bữa ăn khoa học cho sinh viên & người tập gym, chỉ với vài thao tác kéo thả.
+          {% elif page_title == "Công thức nấu ăn" %}
+          Bộ sưu tập công thức đơn giản, dễ nấu, phù hợp cho cuộc sống bận rộn.
+          {% else %}
+          Quy hoạch bữa ăn, công thức & danh sách mua sắm một cách nhẹ nhàng và trực quan.
+          {% endif %}
+        </p>
+      </div>
+      <div class="page-hero-badge">
+        <i class="fa-solid fa-seedling"></i>
+        Eat better. Plan smarter.
+      </div>
+    </section>
+    {% endif %}
 
     <!-- ================ MAIN CONTENT ================ -->
     <main class="main">
@@ -138,7 +241,7 @@
         const currentPath = window.location.pathname;
         const navLinks = document.querySelectorAll(".nav-link");
 
-         navLinks.forEach((link) => {
+        navLinks.forEach((link) => {
           const href = link.getAttribute("href");
           if (!href) return;
 

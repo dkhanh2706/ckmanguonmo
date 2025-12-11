@@ -10,6 +10,9 @@ from .routes_auth import router as auth_router
 from .routes_recipes import router as recipes_router
 from .routes_default_recipes import router as default_recipes_router
 
+from .routes_student_planner import router as student_planner_router
+from .routes_gym_planner import router as gym_planner_router
+
 # ============================
 #   KHỞI TẠO APP + DATABASE
 # ============================
@@ -84,6 +87,10 @@ app.include_router(auth_router)
 app.include_router(recipes_router)
 app.include_router(default_recipes_router)
 
+# router dùng chung API cho student / gym (chỉ dùng phần /api/...)
+app.include_router(student_planner_router)
+app.include_router(gym_planner_router)
+
 
 # ============================
 #   HTML PAGES
@@ -125,6 +132,12 @@ def page_recipe_edit(request: Request, recipe_id: int):
         "recipe_edit.html",
         {"request": request, "recipe_id": recipe_id},
     )
+
+
+# ===== TRANG MEAL PLANNER GỘP STUDENT + GYM =====
+@app.get("/meal-planner", response_class=HTMLResponse)
+def page_meal_planner(request: Request):
+    return templates.TemplateResponse("meal_planner.html", {"request": request})
 
 
 # ===== PAGES TÍNH NĂNG KHÁC (demo) =====
