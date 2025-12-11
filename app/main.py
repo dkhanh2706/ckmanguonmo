@@ -9,7 +9,6 @@ from . import models
 from .routes_auth import router as auth_router
 from .routes_recipes import router as recipes_router
 from .routes_default_recipes import router as default_recipes_router
-
 from .routes_student_planner import router as student_planner_router
 from .routes_gym_planner import router as gym_planner_router
 
@@ -30,6 +29,10 @@ templates = Jinja2Templates(directory="templates")
 # ============================
 @app.on_event("startup")
 def seed_sample_recipes():
+    """
+    Tạo 3 công thức demo nếu bảng recipes đang trống.
+    Dùng chung ảnh placeholder: static/img/default_recipe.jpg
+    """
     db = SessionLocal()
     try:
         count = db.query(models.Recipe).count()
@@ -46,7 +49,8 @@ def seed_sample_recipes():
                     ),
                     note="Thời gian: 15 phút, Độ khó: Dễ",
                     category="chiên",
-                    image=None,
+                    # 🔥 Ảnh mặc định (đặt file ở: static/img/default_recipe.jpg)
+                    image="static/img/default_recipe.jpg",
                 ),
                 models.Recipe(
                     title="Canh rau cải thịt bằm",
@@ -59,7 +63,7 @@ def seed_sample_recipes():
                     ),
                     note="Thời gian: 20 phút, Độ khó: Dễ",
                     category="canh",
-                    image=None,
+                    image="static/img/default_recipe.jpg",
                 ),
                 models.Recipe(
                     title="Salad ức gà healthy",
@@ -71,7 +75,7 @@ def seed_sample_recipes():
                     ),
                     note="Thời gian: 25 phút, Healthy",
                     category="healthy",
-                    image=None,
+                    image="static/img/default_recipe.jpg",
                 ),
             ]
             db.add_all(sample_recipes)
@@ -86,8 +90,6 @@ def seed_sample_recipes():
 app.include_router(auth_router)
 app.include_router(recipes_router)
 app.include_router(default_recipes_router)
-
-# router dùng chung API cho student / gym (chỉ dùng phần /api/...)
 app.include_router(student_planner_router)
 app.include_router(gym_planner_router)
 
