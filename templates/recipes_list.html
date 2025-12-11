@@ -119,6 +119,7 @@ Planner{% endblock %} {% block content %}
     flex-direction: column;
     gap: 4px;
     margin-bottom: 10px;
+    text-align: center;
   }
 
   .section-header h2 {
@@ -134,25 +135,34 @@ Planner{% endblock %} {% block content %}
     color: #6b7280;
   }
 
-  /* GRID + CARD (dùng chung cho default & user, JS sẽ thêm nội dung) */
+  /* GRID */
   .recipe-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
   }
 
+  /* CARD CHUNG */
   .recipe-card {
     background: #ffffff;
-    border-radius: 14px;
+    border-radius: 16px;
     overflow: hidden;
     border: 1px solid #e5e7eb;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
     display: flex;
     flex-direction: column;
+    transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+  }
+
+  .recipe-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+    border-color: #bfdbfe;
   }
 
   .recipe-card-thumb {
-    height: 140px;
+    position: relative;
+    height: 150px;
     overflow: hidden;
     background: #f9fafb;
   }
@@ -164,21 +174,60 @@ Planner{% endblock %} {% block content %}
     display: block;
   }
 
+  .badge {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+  }
+
+  .badge-default {
+    background: rgba(239, 246, 255, 0.9);
+    color: #4f46e5;
+    border: 1px solid rgba(191, 219, 254, 0.9);
+  }
+
+  .badge-user {
+    background: rgba(240, 253, 250, 0.9);
+    color: #059669;
+    border: 1px solid rgba(167, 243, 208, 0.9);
+  }
+
   .recipe-card-body {
-    padding: 10px 12px 12px;
+    padding: 10px 14px 12px;
   }
 
   .recipe-card-title {
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 600;
     margin: 0 0 4px;
     color: #111827;
   }
 
-  .recipe-card-note {
-    font-size: 0.8rem;
+  .recipe-card-meta {
+    font-size: 0.78rem;
     color: #6b7280;
     margin: 0 0 6px;
+  }
+
+  .recipe-card-note {
+    font-size: 0.8rem;
+    color: #4b5563;
+    margin: 0 0 6px;
+  }
+
+  .recipe-card-ingredients {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  .recipe-card-ingredients strong {
+    color: #111827;
   }
 
   .recipe-tag {
@@ -188,6 +237,53 @@ Planner{% endblock %} {% block content %}
     font-size: 0.75rem;
     background: #eff6ff;
     color: #1d4ed8;
+  }
+
+  /* CARD USER */
+  .recipe-card.user-card {
+    cursor: pointer;
+  }
+
+  .recipe-card-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .btn-card {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    border: 1px solid #cbd5e1;
+    background: #f9fafb;
+    color: #111827;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.1s;
+  }
+
+  .btn-card:hover {
+    background: #e5e7eb;
+    box-shadow: 0 2px 6px rgba(148, 163, 184, 0.6);
+  }
+
+  .btn-card-danger {
+    border-color: #fecaca;
+    color: #b91c1c;
+    background: #fef2f2;
+  }
+
+  .btn-card-danger:hover {
+    background: #fee2e2;
+  }
+
+  .empty-text,
+  .loading-text {
+    font-size: 0.85rem;
+    color: #6b7280;
   }
 
   @media (max-width: 768px) {
@@ -244,9 +340,7 @@ Planner{% endblock %} {% block content %}
       </p>
     </div>
     <div id="default-recipes-list" class="recipe-grid">
-      <!-- JS (recipes_list.js) sẽ render card gợi ý ở đây.
-           Nên trong JS nhớ dùng ảnh fallback nếu thiếu, ví dụ:
-           img.src = recipe.image || "/static/img/default_recipe.jpg"; -->
+      <!-- JS sẽ render card gợi ý -->
     </div>
   </section>
 
@@ -259,7 +353,7 @@ Planner{% endblock %} {% block content %}
       </p>
     </div>
     <div id="user-recipes-list" class="recipe-grid">
-      <!-- JS sẽ render công thức user ở đây -->
+      <!-- JS sẽ render công thức user -->
     </div>
   </section>
 </div>

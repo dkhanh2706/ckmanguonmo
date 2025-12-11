@@ -8,14 +8,12 @@
   --shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
-/* ===== PAGE WRAPPER ===== */
 .page-recipes {
   max-width: 1100px;
   margin: 40px auto 60px;
   padding: 0 16px 40px;
 }
 
-/* ===== HERO / TITLE ===== */
 .recipes-hero {
   display: flex;
   justify-content: space-between;
@@ -101,7 +99,6 @@
   background: #fff;
 }
 
-/* ===== SECTIONS (Gợi ý / Của bạn) ===== */
 .recipes-section {
   margin-top: 32px;
 }

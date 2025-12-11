@@ -1,8 +1,10 @@
 // static/js/recipes_list.js
 
 // =======================
-// STATE TOÀN CỤC
+// CẤU HÌNH & STATE
 // =======================
+const DEFAULT_IMG = "/static/img/default_recipe.jpg";
+
 let defaultRecipes = [];
 let userRecipes = [];
 
@@ -17,7 +19,6 @@ const btnSearch = document.getElementById("btn-search");
 // HÀM TIỆN ÍCH
 // =======================
 
-// Escape text để tránh lỗi HTML (phòng ngừa XSS nhẹ nhàng)
 function escapeHtml(str = "") {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -27,131 +28,130 @@ function escapeHtml(str = "") {
     .replace(/'/g, "&#039;");
 }
 
-// Chuẩn hóa đường dẫn ảnh từ DB -> URL cho <img>
+// Rút gọn text (ví dụ cho nguyên liệu)
+function truncate(text = "", maxLen = 80) {
+  const t = text.trim();
+  if (t.length <= maxLen) return t;
+  return t.slice(0, maxLen - 3) + "...";
+}
+
+// Build URL ảnh từ giá trị image trong DB
 function buildImageUrl(image) {
-  if (!image) return "";
+  if (!image) return DEFAULT_IMG;
 
   let path = String(image).trim();
-  if (!path) return "";
+  if (!path) return DEFAULT_IMG;
 
-  // Nếu là URL tuyệt đối (http, https, data:) thì dùng luôn
+  // Trường hợp URL tuyệt đối
   if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) {
     return path;
   }
 
-  // Bỏ "/" đầu nếu có
-  if (path.startsWith("/")) {
-    path = path.slice(1);
-  }
+  // Bỏ / đầu nếu có
+  if (path.startsWith("/")) path = path.slice(1);
 
-  // Một số dạng hay gặp:
-  // "static/uploads/xxx.jpg"
-  // "uploads/xxx.jpg"
-  // "xxx.jpg"
-  if (path.startsWith("app/static/")) {
-    // Nếu lỡ lưu "app/static/..." thì bỏ "app/"
-    path = path.replace(/^app\//, "");
-  }
+  // Nếu lỡ lưu "app/static/..."
+  if (path.startsWith("app/")) path = path.slice(4);
 
   if (path.startsWith("static/")) {
-    // Đã có "static/..." rồi
+    // ok
   } else if (path.startsWith("uploads/")) {
     path = "static/" + path;
   } else {
-    // Mặc định cho vào static/uploads
+    // fallback: cho vào static/uploads/
     path = "static/uploads/" + path;
   }
 
   return "/" + path;
 }
 
-// Tạo HTML ảnh thumb (nếu có ảnh)
-function renderImageThumb(recipe) {
-  if (!recipe.image) return "";
-
-  const url = buildImageUrl(recipe.image);
-  if (!url) return "";
-
-  return `
-    <div class="recipe-thumb">
-      <img src="${url}" alt="${escapeHtml(recipe.title || "Ảnh món ăn")}" loading="lazy" />
-    </div>
-  `;
-}
-
 // =======================
-// TẠO CARD HIỂN THỊ
+// TẠO HTML CARD
 // =======================
 
+// Card cho công thức gợi ý
 function createDefaultCard(recipe) {
-  return `
-    <article class="recipe-card recipe-card-default">
-        <div class="recipe-card-header">
-            ${renderImageThumb(recipe)}
-            <div class="recipe-card-header-text">
-              <div class="recipe-tag">Gợi ý</div>
-              <h3 class="recipe-title">${escapeHtml(recipe.title)}</h3>
-              <p class="recipe-category">${escapeHtml(recipe.category || "Khác")}</p>
-            </div>
-        </div>
-        <p class="recipe-note">${escapeHtml(recipe.note || "")}</p>
-        <p class="recipe-ingredients">
-            <strong>Nguyên liệu chính:</strong> ${escapeHtml(recipe.ingredients || "")}
-        </p>
-    </article>
-  `;
-}
-
-function createUserCard(recipe) {
-  const isDefault = recipe.id <= 3; // Nếu bạn dùng id 1,2,3 làm mặc định trong DB
+  const imgUrl = buildImageUrl(recipe.image);
+  const title = escapeHtml(recipe.title || "Món ăn gợi ý");
+  const category = escapeHtml(recipe.category || "Khác");
+  const note = escapeHtml(recipe.note || "");
+  const ingredientsShort = truncate(recipe.ingredients || "", 90);
 
   return `
     <article class="recipe-card">
-        <div class="recipe-card-header">
-            ${renderImageThumb(recipe)}
-            <div class="recipe-card-header-text">
-              ${
-                isDefault
-                  ? '<div class="recipe-tag">Mặc định</div>'
-                  : ""
-              }
-              <h3 class="recipe-title">${escapeHtml(recipe.title)}</h3>
-              <p class="recipe-category">${escapeHtml(recipe.category || "Khác")}</p>
-            </div>
+      <div class="recipe-card-thumb">
+        <img src="${imgUrl}" alt="${title}"
+             loading="lazy"
+             onerror="this.src='${DEFAULT_IMG}'" />
+        <span class="badge badge-default">Gợi ý</span>
+      </div>
+      <div class="recipe-card-body">
+        <h3 class="recipe-card-title">${title}</h3>
+        <p class="recipe-card-meta">${category}</p>
+        ${note ? `<p class="recipe-card-note">${note}</p>` : ""}
+        ${
+          ingredientsShort
+            ? `<p class="recipe-card-ingredients"><strong>Nguyên liệu chính:</strong> ${escapeHtml(
+                ingredientsShort
+              )}</p>`
+            : ""
+        }
+      </div>
+    </article>
+  `;
+}
+
+// Card cho công thức của user
+function createUserCard(recipe) {
+  const imgUrl = buildImageUrl(recipe.image);
+  const title = escapeHtml(recipe.title || "Món ăn của bạn");
+  const category = escapeHtml(recipe.category || "Khác");
+  const note = escapeHtml(recipe.note || "");
+  const ingredientsShort = truncate(recipe.ingredients || "", 80);
+
+  return `
+    <article class="recipe-card user-card">
+      <div class="recipe-card-thumb">
+        <img src="${imgUrl}" alt="${title}"
+             loading="lazy"
+             onerror="this.src='${DEFAULT_IMG}'" />
+        <span class="badge badge-user">Của bạn</span>
+      </div>
+      <div class="recipe-card-body">
+        <h3 class="recipe-card-title">${title}</h3>
+        <p class="recipe-card-meta">${category}</p>
+        ${note ? `<p class="recipe-card-note">${note}</p>` : ""}
+        ${
+          ingredientsShort
+            ? `<p class="recipe-card-ingredients"><strong>Nguyên liệu:</strong> ${escapeHtml(
+                ingredientsShort
+              )}</p>`
+            : ""
+        }
+
+        <div class="recipe-card-actions">
+          <a href="/recipes/${recipe.id}/edit" class="btn-card">
+            Xem / sửa
+          </a>
+          <button class="btn-card btn-card-danger"
+                  data-action="delete"
+                  data-id="${recipe.id}">
+            Xóa
+          </button>
         </div>
-
-        <p class="recipe-note">${escapeHtml(recipe.note || "")}</p>
-
-        <div class="recipe-actions">
-            <a href="/recipes/${recipe.id}/edit" class="btn-small btn-primary-outline">
-              Xem chi tiết
-            </a>
-
-            ${
-              isDefault
-                ? ""
-                : `
-                  <button class="btn-small btn-outline" data-action="edit" data-id="${recipe.id}">
-                      Sửa
-                  </button>
-                  <button class="btn-small btn-danger" data-action="delete" data-id="${recipe.id}">
-                      Xóa
-                  </button>
-                `
-            }
-        </div>
+      </div>
     </article>
   `;
 }
 
 // =======================
-// RENDER LISTS
+// RENDER LIST
 // =======================
 
-function renderDefaultRecipes(term = "") {
+function renderDefaultRecipes(searchTerm = "") {
   if (!defaultListEl) return;
-  const q = term.trim().toLowerCase();
 
+  const q = searchTerm.trim().toLowerCase();
   const filtered = defaultRecipes.filter((r) => {
     if (!q) return true;
     return (
@@ -166,13 +166,13 @@ function renderDefaultRecipes(term = "") {
     return;
   }
 
-  defaultListEl.innerHTML = filtered.map((r) => createDefaultCard(r)).join("");
+  defaultListEl.innerHTML = filtered.map(createDefaultCard).join("");
 }
 
-function renderUserRecipes(term = "") {
+function renderUserRecipes(searchTerm = "") {
   if (!userListEl) return;
-  const q = term.trim().toLowerCase();
 
+  const q = searchTerm.trim().toLowerCase();
   const filtered = userRecipes.filter((r) => {
     if (!q) return true;
     return (
@@ -183,7 +183,7 @@ function renderUserRecipes(term = "") {
 
   if (!filtered.length) {
     userListEl.innerHTML =
-      '<p class="empty-text">Chưa có công thức phù hợp. Hãy thử tìm từ khoá khác hoặc thêm món mới 👩‍🍳</p>';
+      '<p class="empty-text">Chưa có công thức phù hợp. Hãy thử từ khoá khác hoặc thêm món mới 👩‍🍳</p>';
     if (emptyUserText) emptyUserText.style.display = "block";
     return;
   }
@@ -199,9 +199,12 @@ function renderUserRecipes(term = "") {
 async function loadDefaultRecipes() {
   if (!defaultListEl) return;
 
-  defaultListEl.innerHTML = '<p class="loading-text">Đang tải công thức gợi ý...</p>';
+  defaultListEl.innerHTML =
+    '<p class="loading-text">Đang tải công thức gợi ý...</p>';
 
   try {
+    // ✔ Router gợi ý của bạn: routes_default_recipes
+    //   hiện tại đang dùng path GET "/default-recipes"
     const res = await fetch("/default-recipes");
     if (!res.ok) throw new Error("Failed to load default recipes");
     defaultRecipes = await res.json();
@@ -216,7 +219,8 @@ async function loadDefaultRecipes() {
 async function loadUserRecipes() {
   if (!userListEl) return;
 
-  userListEl.innerHTML = '<p class="loading-text">Đang tải công thức của bạn...</p>';
+  userListEl.innerHTML =
+    '<p class="loading-text">Đang tải công thức của bạn...</p>';
 
   try {
     const res = await fetch("/api/recipes/");
@@ -254,11 +258,6 @@ if (userListEl) {
 
     if (!id) return;
 
-    if (action === "edit") {
-      window.location.href = `/recipes/${id}/edit`;
-      return;
-    }
-
     if (action === "delete") {
       if (!confirm("Bạn có chắc muốn xóa công thức này?")) return;
       try {
@@ -279,6 +278,10 @@ if (userListEl) {
     }
   });
 }
+
+// =======================
+// KHỞI TẠO
+// =======================
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDefaultRecipes();

@@ -49,7 +49,6 @@ def seed_sample_recipes():
                     ),
                     note="Thời gian: 15 phút, Độ khó: Dễ",
                     category="chiên",
-                    # 🔥 Ảnh mặc định (đặt file ở: static/img/default_recipe.jpg)
                     image="static/img/default_recipe.jpg",
                 ),
                 models.Recipe(
