@@ -107,9 +107,7 @@ function renderCart() {
     li.innerHTML = `
       <span class="cart-item-name">${item.name}</span>
       <span class="cart-item-qty">x${item.qty}</span>
-      <span class="cart-item-price">${formatVND(
-        item.price * item.qty
-      )} đ</span>
+      <span class="cart-item-price">${formatVND(item.price * item.qty)} đ</span>
       <button class="cart-item-remove" title="Xóa khỏi giỏ">&times;</button>
     `;
     const removeBtn = li.querySelector(".cart-item-remove");
@@ -168,6 +166,45 @@ function generateOrderSummary() {
   return lines.join("\n");
 }
 
+async function sendOrderToServer() {
+  if (state.cart.length === 0) {
+    alert("Giỏ hàng đang trống.");
+    return null;
+  }
+
+  const payload = {
+    customer_name: null, // sau này có thể thêm input tên khách
+    note: null,
+    items: state.cart.map((item) => ({
+      product_id: item.id,
+      qty: item.qty,
+    })),
+  };
+
+  try {
+    const res = await fetch("/api/shop/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      console.error("Lỗi khi lưu đơn hàng:", await res.text());
+      alert("Có lỗi khi lưu đơn hàng (backend).");
+      return null;
+    }
+
+    const data = await res.json();
+    return data; // { message, order_id, total_price }
+  } catch (err) {
+    console.error("Lỗi khi gọi API orders:", err);
+    alert("Không gọi được API đơn hàng.");
+    return null;
+  }
+}
+
 function setupCheckout() {
   const checkoutBtn = document.getElementById("btn-checkout");
   const outputEl = document.getElementById("order-output");
@@ -175,15 +212,31 @@ function setupCheckout() {
 
   if (!checkoutBtn || !outputEl || !copyBtn) return;
 
-  checkoutBtn.addEventListener("click", () => {
+  checkoutBtn.addEventListener("click", async () => {
     const content = generateOrderSummary();
     outputEl.value = content;
-    if (state.cart.length > 0) {
-      alert("Đã tạo nội dung đơn hàng bên dưới. Bạn có thể sao chép để gửi cho người bán.");
-    } else {
+
+    if (state.cart.length === 0) {
       alert("Giỏ hàng đang trống.");
+      return;
     }
-    // LƯU Ý: KHÔNG xóa giỏ sau khi mua, theo yêu cầu.
+
+    // Gửi đơn lên server để lưu vào DB
+    const result = await sendOrderToServer();
+    if (result && result.order_id) {
+      alert(
+        `Đã tạo đơn hàng #${result.order_id} (tổng ${formatVND(
+          result.total_price
+        )} đ). Nội dung chi tiết nằm ở ô bên dưới, bạn có thể sao chép để gửi cho người bán.`
+      );
+    } else {
+      // Nếu backend lỗi nhưng vẫn tạo được nội dung đơn thì vẫn cho user dùng
+      alert(
+        "Đã tạo nội dung đơn hàng ở ô bên dưới. (Lưu ý: có thể lưu DB không thành công)."
+      );
+    }
+
+    // GIỮ NGUYÊN GIỎ HÀNG, KHÔNG XÓA
   });
 
   copyBtn.addEventListener("click", () => {

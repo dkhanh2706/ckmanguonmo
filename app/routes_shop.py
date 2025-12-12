@@ -9,6 +9,8 @@ from fastapi import (
     HTTPException,
 )
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+
 from app.database import get_db
 from app import models
 
@@ -23,12 +25,14 @@ UPLOAD_DIR = "static/uploads/products"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+# =========================
+#     TIỆN ÍCH ẢNH
+# =========================
 def save_image(file: UploadFile | None) -> str | None:
     """Lưu file upload và trả về tên file (hoặc None nếu không có)."""
     if not file:
         return None
 
-    # Sinh tên file ngẫu nhiên để tránh trùng
     ext = file.filename.split(".")[-1]
     filename = f"{uuid.uuid4().hex}.{ext}"
     file_path = os.path.join(UPLOAD_DIR, filename)
@@ -43,18 +47,17 @@ def image_url(filename: str | None) -> str | None:
     """Trả về đường dẫn cho FE, nếu không có ảnh thì trả về None."""
     if not filename:
         return None
-    # lưu trong DB chỉ là tên file, FE sẽ truy cập /static/uploads/products/<file>
     return f"/static/uploads/products/{filename}"
 
 
-# =========================================
-# READ: Lấy danh sách sản phẩm
-# =========================================
+# =========================
+#     PRODUCT CRUD
+# =========================
+
 @router.get("/products")
 def list_products(db: Session = Depends(get_db)):
     products = db.query(models.Product).order_by(models.Product.id.desc()).all()
 
-    # Trả về JSON cho FE, convert image thành URL đầy đủ
     return [
         {
             "id": p.id,
@@ -68,9 +71,6 @@ def list_products(db: Session = Depends(get_db)):
     ]
 
 
-# =========================================
-# READ: Lấy chi tiết 1 sản phẩm
-# =========================================
 @router.get("/products/{product_id}")
 def get_product(product_id: int, db: Session = Depends(get_db)):
     product = (
@@ -91,9 +91,6 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     }
 
 
-# =========================================
-# CREATE: Thêm sản phẩm mới
-# =========================================
 @router.post("/products")
 async def create_product(
     name: str = Form(...),
@@ -123,9 +120,6 @@ async def create_product(
     }
 
 
-# =========================================
-# UPDATE: Sửa sản phẩm
-# =========================================
 @router.put("/products/{product_id}")
 async def update_product(
     product_id: int,
@@ -149,7 +143,6 @@ async def update_product(
     product.unit = unit
     product.badge = badge
 
-    # Nếu có file mới thì lưu + cập nhật
     if image:
         filename = save_image(image)
         product.image = filename
@@ -164,9 +157,6 @@ async def update_product(
     }
 
 
-# =========================================
-# DELETE: Xoá sản phẩm
-# =========================================
 @router.delete("/products/{product_id}")
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = (
@@ -180,3 +170,108 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     db.delete(product)
     db.commit()
     return {"message": "Deleted"}
+
+
+# =========================
+#     ORDER MODEL (input)
+# =========================
+
+class OrderItemIn(BaseModel):
+    product_id: int
+    qty: int
+
+
+class OrderCreate(BaseModel):
+    customer_name: str | None = None
+    note: str | None = None
+    items: list[OrderItemIn]
+
+
+# =========================
+#     ORDER API
+# =========================
+
+@router.post("/orders")
+def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="Giỏ hàng trống")
+
+    # Lấy tất cả product cần dùng
+    product_ids = [item.product_id for item in payload.items]
+    products = (
+        db.query(models.Product)
+        .filter(models.Product.id.in_(product_ids))
+        .all()
+    )
+    product_map = {p.id: p for p in products}
+
+    # Kiểm tra thiếu sản phẩm nào không
+    missing_ids = [pid for pid in product_ids if pid not in product_map]
+    if missing_ids:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Sản phẩm không tồn tại: {missing_ids}",
+        )
+
+    total_price = 0
+    order_items = []
+
+    for item in payload.items:
+        prod = product_map[item.product_id]
+        line_total = prod.price * item.qty
+        total_price += line_total
+
+        oi = models.OrderItem(
+            product_id=prod.id,
+            product_name=prod.name,
+            unit_price=prod.price,
+            quantity=item.qty,
+        )
+        order_items.append(oi)
+
+    order = models.Order(
+        customer_name=payload.customer_name or "Khách lẻ",
+        note=payload.note or "Đơn tạo từ /shopping-list",
+        total_price=total_price,
+        items=order_items,
+    )
+
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+
+    return {
+        "message": "Order created",
+        "order_id": order.id,
+        "total_price": total_price,
+    }
+
+
+@router.get("/orders")
+def list_orders(db: Session = Depends(get_db)):
+    orders = (
+        db.query(models.Order)
+        .order_by(models.Order.id.desc())
+        .all()
+    )
+
+    result = []
+    for o in orders:
+        result.append(
+            {
+                "id": o.id,
+                "customer_name": o.customer_name,
+                "note": o.note,
+                "total_price": o.total_price,
+                "created_at": o.created_at,
+                "items": [
+                    {
+                        "product_name": i.product_name,
+                        "unit_price": i.unit_price,
+                        "quantity": i.quantity,
+                    }
+                    for i in o.items
+                ],
+            }
+        )
+    return result
