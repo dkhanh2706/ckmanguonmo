@@ -1,0 +1,74 @@
+{# templates/shopping_list.html #}
+{% extends "base.html" %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/shop.css" />
+{% endblock %}
+
+{% block content %}
+<div class="shop-layout">
+  <section class="shop-main">
+    <header class="shop-header">
+      <div>
+        <h2>🛒 Cửa hàng nguyên liệu</h2>
+        <p>
+          Chọn nhanh nguyên liệu cho các công thức & lịch ăn uống của bạn.
+        </p>
+      </div>
+      <div class="shop-search">
+        <input
+          type="text"
+          id="shop-search-input"
+          placeholder="Tìm: gạo, ức gà, dầu olive..."
+        />
+        <button id="shop-search-btn">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </header>
+
+    <div id="shop-products" class="shop-grid">
+      <!-- JS sẽ render card sản phẩm ở đây -->
+    </div>
+  </section>
+
+  <aside class="shop-cart" id="shop-cart">
+    <h3>Giỏ hàng</h3>
+
+    <ul id="cart-items" class="cart-items"></ul>
+
+    <div class="cart-footer">
+      <div class="cart-total">
+        Tổng tạm tính: <span id="cart-total">0</span> đ
+      </div>
+      <div class="cart-actions">
+        <button id="btn-checkout" class="btn-checkout">
+          Tạo đơn mua hàng
+        </button>
+      </div>
+      <p class="cart-note">
+        * Bấm "Tạo đơn mua hàng" để xuất nội dung & tổng tiền bên dưới. Các
+        món vẫn nằm trong giỏ, bạn có thể xóa từng món nếu không cần nữa.
+      </p>
+    </div>
+
+    <div class="order-output-block">
+      <div class="order-output-header">
+        <span>📄 Nội dung đơn hàng</span>
+        <button id="btn-copy-order" type="button">
+          Sao chép
+        </button>
+      </div>
+      <textarea
+        id="order-output"
+        readonly
+        placeholder="Chưa có đơn hàng nào. Hãy thêm sản phẩm và bấm 'Tạo đơn mua hàng'."
+      ></textarea>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/shop.js"></script>
+{% endblock %}

@@ -11,6 +11,8 @@ from .routes_recipes import router as recipes_router
 from .routes_default_recipes import router as default_recipes_router
 from .routes_student_planner import router as student_planner_router
 from .routes_gym_planner import router as gym_planner_router
+from .routes_shop import router as shop_router  # ← router shop mới
+
 
 # ============================
 #   KHỞI TẠO APP + DATABASE
@@ -28,15 +30,15 @@ templates = Jinja2Templates(directory="templates")
 #   SEED DATA DEMO
 # ============================
 @app.on_event("startup")
-def seed_sample_recipes():
+def seed_sample_data():
     """
-    Tạo 3 công thức demo nếu bảng recipes đang trống.
+    Tạo dữ liệu demo cho Recipe + Product nếu bảng đang trống.
     Dùng chung ảnh placeholder: static/img/default_recipe.jpg
     """
     db = SessionLocal()
     try:
-        count = db.query(models.Recipe).count()
-        if count == 0:
+        # ===== Seed RECIPES nếu bảng trống =====
+        if db.query(models.Recipe).count() == 0:
             sample_recipes = [
                 models.Recipe(
                     title="Cơm chiên trứng",
@@ -78,7 +80,42 @@ def seed_sample_recipes():
                 ),
             ]
             db.add_all(sample_recipes)
-            db.commit()
+
+        # ===== Seed PRODUCTS nếu bảng trống =====
+        if db.query(models.Product).count() == 0:
+            sample_products = [
+                models.Product(
+                    name="Gạo ST25 5kg",
+                    price=185000,
+                    unit="bao",
+                    badge="Bán chạy",
+                    image=None,  # nếu có file thì đổi thành tên file
+                ),
+                models.Product(
+                    name="Ức gà fillet 1kg",
+                    price=89000,
+                    unit="kg",
+                    badge="Healthy",
+                    image=None,
+                ),
+                models.Product(
+                    name="Dầu olive Extra Virgin 500ml",
+                    price=145000,
+                    unit="chai",
+                    badge="Ưu đãi",
+                    image=None,
+                ),
+                models.Product(
+                    name="Yến mạch cán mỏng 1kg",
+                    price=76000,
+                    unit="gói",
+                    badge="Gym",
+                    image=None,
+                ),
+            ]
+            db.add_all(sample_products)
+
+        db.commit()
     finally:
         db.close()
 
@@ -91,6 +128,7 @@ app.include_router(recipes_router)
 app.include_router(default_recipes_router)
 app.include_router(student_planner_router)
 app.include_router(gym_planner_router)
+app.include_router(shop_router)
 
 
 # ============================
@@ -119,7 +157,10 @@ def page_forgot(request: Request):
 # ===== PAGES CHO RECIPES =====
 @app.get("/recipes", response_class=HTMLResponse)
 def page_recipes(request: Request):
-    return templates.TemplateResponse("recipes_list.html", {"request": request})
+    return templates.TemplateResponse(
+        "recipes_list.html",
+        {"request": request, "page_title": "Công thức nấu ăn"},
+    )
 
 
 @app.get("/recipes/new", response_class=HTMLResponse)
@@ -138,7 +179,10 @@ def page_recipe_edit(request: Request, recipe_id: int):
 # ===== TRANG MEAL PLANNER GỘP STUDENT + GYM =====
 @app.get("/meal-planner", response_class=HTMLResponse)
 def page_meal_planner(request: Request):
-    return templates.TemplateResponse("meal_planner.html", {"request": request})
+    return templates.TemplateResponse(
+        "meal_planner.html",
+        {"request": request, "page_title": "Lịch ăn uống hằng tuần"},
+    )
 
 
 # ===== PAGES TÍNH NĂNG KHÁC (demo) =====
@@ -165,12 +209,13 @@ def page_recipe_library():
     )
 
 
-@app.get("/features/shopping-list", response_class=HTMLResponse)
-def page_shopping_list():
-    return HTMLResponse(
-        """
-        <h1>Danh sách mua sắm</h1>
-        <p>Chức năng sẽ được thêm sau.</p>
-        <a href="/">← Quay lại trang chủ</a>
-        """
+# ===== TRANG BÁN HÀNG / DANH SÁCH MUA SẮM =====
+@app.get("/shopping-list", response_class=HTMLResponse)
+def page_shopping_list(request: Request):
+    return templates.TemplateResponse(
+        "shopping_list.html",
+        {
+            "request": request,
+            "page_title": "Cửa hàng & Danh sách mua sắm",
+        },
     )

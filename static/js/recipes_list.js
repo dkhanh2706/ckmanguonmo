@@ -3,7 +3,18 @@
 // =======================
 // CẤU HÌNH & STATE
 // =======================
-const DEFAULT_IMG = "/static/img/default_recipe.jpg";
+
+// Ảnh fallback cuối cùng, chắc chắn tồn tại
+const DEFAULT_FALLBACK_IMG = "/static/img/default_recipe.jpg";
+
+// Danh sách ảnh mặc định xoay vòng cho các card
+// 👉 Bạn có thể tạo thêm file default_1.jpg, default_2.jpg, default_3.jpg …
+const DEFAULT_IMAGES = [
+  "/static/img/default_1.jpg",
+  "/static/img/default_2.jpg",
+  "/static/img/default_3.jpg",
+  DEFAULT_FALLBACK_IMG, // luôn để 1 ảnh tồn tại cuối cùng
+];
 
 let defaultRecipes = [];
 let userRecipes = [];
@@ -35,14 +46,22 @@ function truncate(text = "", maxLen = 80) {
   return t.slice(0, maxLen - 3) + "...";
 }
 
-// Build URL ảnh từ giá trị image trong DB
+// Chọn ảnh mặc định theo index (xoay vòng)
+function pickDefaultImage(index = 0) {
+  if (!DEFAULT_IMAGES.length) return DEFAULT_FALLBACK_IMG;
+  const i = index % DEFAULT_IMAGES.length;
+  return DEFAULT_IMAGES[i] || DEFAULT_FALLBACK_IMG;
+}
+
+// Build URL ảnh từ giá trị image trong DB / API
+// Trả về: string url hoặc null nếu không xây được
 function buildImageUrl(image) {
-  if (!image) return DEFAULT_IMG;
+  if (!image) return null;
 
   let path = String(image).trim();
-  if (!path) return DEFAULT_IMG;
+  if (!path) return null;
 
-  // Trường hợp URL tuyệt đối
+  // Trường hợp URL tuyệt đối (http, https, data)
   if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) {
     return path;
   }
@@ -51,10 +70,10 @@ function buildImageUrl(image) {
   if (path.startsWith("/")) path = path.slice(1);
 
   // Nếu lỡ lưu "app/static/..."
-  if (path.startsWith("app/")) path = path.slice(4);
+  if (path.startsWith("app/")) path = path.slice(4); // bỏ "app/"
 
   if (path.startsWith("static/")) {
-    // ok
+    // ok, đã là static/...
   } else if (path.startsWith("uploads/")) {
     path = "static/" + path;
   } else {
@@ -70,8 +89,10 @@ function buildImageUrl(image) {
 // =======================
 
 // Card cho công thức gợi ý
-function createDefaultCard(recipe) {
-  const imgUrl = buildImageUrl(recipe.image);
+function createDefaultCard(recipe, index) {
+  const baseImg = buildImageUrl(recipe.image);
+  const imgUrl = baseImg || pickDefaultImage(index);
+
   const title = escapeHtml(recipe.title || "Món ăn gợi ý");
   const category = escapeHtml(recipe.category || "Khác");
   const note = escapeHtml(recipe.note || "");
@@ -82,7 +103,7 @@ function createDefaultCard(recipe) {
       <div class="recipe-card-thumb">
         <img src="${imgUrl}" alt="${title}"
              loading="lazy"
-             onerror="this.src='${DEFAULT_IMG}'" />
+             onerror="this.src='${DEFAULT_FALLBACK_IMG}'" />
         <span class="badge badge-default">Gợi ý</span>
       </div>
       <div class="recipe-card-body">
@@ -102,8 +123,10 @@ function createDefaultCard(recipe) {
 }
 
 // Card cho công thức của user
-function createUserCard(recipe) {
-  const imgUrl = buildImageUrl(recipe.image);
+function createUserCard(recipe, index) {
+  const baseImg = buildImageUrl(recipe.image);
+  const imgUrl = baseImg || pickDefaultImage(index);
+
   const title = escapeHtml(recipe.title || "Món ăn của bạn");
   const category = escapeHtml(recipe.category || "Khác");
   const note = escapeHtml(recipe.note || "");
@@ -114,7 +137,7 @@ function createUserCard(recipe) {
       <div class="recipe-card-thumb">
         <img src="${imgUrl}" alt="${title}"
              loading="lazy"
-             onerror="this.src='${DEFAULT_IMG}'" />
+             onerror="this.src='${DEFAULT_FALLBACK_IMG}'" />
         <span class="badge badge-user">Của bạn</span>
       </div>
       <div class="recipe-card-body">
@@ -166,7 +189,9 @@ function renderDefaultRecipes(searchTerm = "") {
     return;
   }
 
-  defaultListEl.innerHTML = filtered.map(createDefaultCard).join("");
+  defaultListEl.innerHTML = filtered
+    .map((recipe, index) => createDefaultCard(recipe, index))
+    .join("");
 }
 
 function renderUserRecipes(searchTerm = "") {
@@ -188,7 +213,9 @@ function renderUserRecipes(searchTerm = "") {
     return;
   }
 
-  userListEl.innerHTML = filtered.map(createUserCard).join("");
+  userListEl.innerHTML = filtered
+    .map((recipe, index) => createUserCard(recipe, index))
+    .join("");
   if (emptyUserText) emptyUserText.style.display = "none";
 }
 
@@ -203,8 +230,7 @@ async function loadDefaultRecipes() {
     '<p class="loading-text">Đang tải công thức gợi ý...</p>';
 
   try {
-    // ✔ Router gợi ý của bạn: routes_default_recipes
-    //   hiện tại đang dùng path GET "/default-recipes"
+    // Router gợi ý: routes_default_recipes, path GET "/default-recipes"
     const res = await fetch("/default-recipes");
     if (!res.ok) throw new Error("Failed to load default recipes");
     defaultRecipes = await res.json();
