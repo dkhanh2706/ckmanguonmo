@@ -219,3 +219,12 @@ def page_shopping_list(request: Request):
             "page_title": "Cửa hàng & Danh sách mua sắm",
         },
     )
+@app.get("/order-history", response_class=HTMLResponse)
+def page_order_history(request: Request):
+    return templates.TemplateResponse(
+        "order_history.html",
+        {
+            "request": request,
+            "page_title": "Lịch sử mua hàng",
+        },
+    )

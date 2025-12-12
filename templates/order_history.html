@@ -1,0 +1,36 @@
+{# templates/order_history.html #} {% extends "base.html" %} {% block head_extra
+%}
+<link rel="stylesheet" href="/static/css/order_history.css" />
+{% endblock %} {% block content %}
+<div class="oh-wrap">
+  <div class="oh-header">
+    <div>
+      <h2>📦 Lịch sử mua hàng</h2>
+      <p>
+        Xem lại các đơn đã tạo từ trang Mua sắm. Có thể sao chép nội dung đơn.
+      </p>
+    </div>
+
+    <div class="oh-actions">
+      <button id="btn-refresh" class="oh-btn">
+        <i class="fas fa-rotate"></i> Tải lại
+      </button>
+      <input
+        id="oh-search"
+        class="oh-search"
+        placeholder="Tìm theo mã đơn / tên sản phẩm..."
+      />
+    </div>
+  </div>
+
+  <div id="oh-empty" class="oh-empty" style="display: none">
+    Chưa có đơn hàng nào. Vào <a href="/shopping-list">Mua sắm</a> để tạo đơn.
+  </div>
+
+  <div id="oh-list" class="oh-list">
+    <!-- JS render đơn hàng -->
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="/static/js/order_history.js"></script>
+{% endblock %}
