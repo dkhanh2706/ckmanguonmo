@@ -6,7 +6,6 @@ function formatVND(amount) {
 
 function formatDateTime(isoOrDate) {
   if (!isoOrDate) return "";
-  // FastAPI trả datetime -> thường là ISO string
   const d = new Date(isoOrDate);
   if (isNaN(d.getTime())) return String(isoOrDate);
   return d.toLocaleString("vi-VN");
@@ -39,6 +38,29 @@ async function fetchOrders() {
   return await res.json();
 }
 
+// ✅ NEW: API xóa đơn
+async function deleteOrder(orderId) {
+  // Bạn cần có endpoint DELETE /api/shop/orders/{id}
+  const res = await fetch(`/api/shop/orders/${orderId}`, {
+    method: "DELETE",
+  });
+
+  // Nếu backend trả 204 No Content thì ok
+  if (res.status === 204) return true;
+
+  // Nếu backend trả JSON
+  if (res.ok) return true;
+
+  // Nếu lỗi thì cố đọc message
+  let msg = "Xóa đơn thất bại.";
+  try {
+    const data = await res.json();
+    if (data && (data.detail || data.message))
+      msg = data.detail || data.message;
+  } catch {}
+  throw new Error(msg);
+}
+
 function renderOrders(orders) {
   const listEl = document.getElementById("oh-list");
   const emptyEl = document.getElementById("oh-empty");
@@ -53,6 +75,7 @@ function renderOrders(orders) {
   orders.forEach((o) => {
     const card = document.createElement("div");
     card.className = "oh-card";
+    card.dataset.orderId = o.id;
 
     const itemCount = (o.items || []).reduce(
       (s, it) => s + (it.quantity || 0),
@@ -98,6 +121,11 @@ function renderOrders(orders) {
       <div class="oh-card-actions">
         <button class="oh-action" data-action="toggle">Xem nội dung đơn</button>
         <button class="oh-action primary" data-action="copy">Sao chép</button>
+
+        <!-- ✅ NEW: nút đã mua -->
+        <button class="oh-action danger" data-action="bought">
+          ✅ Đã mua
+        </button>
       </div>
 
       <div class="oh-order-text">
@@ -107,6 +135,7 @@ function renderOrders(orders) {
 
     const btnToggle = card.querySelector('[data-action="toggle"]');
     const btnCopy = card.querySelector('[data-action="copy"]');
+    const btnBought = card.querySelector('[data-action="bought"]');
     const textWrap = card.querySelector(".oh-order-text");
     const textarea = card.querySelector("textarea");
 
@@ -124,6 +153,36 @@ function renderOrders(orders) {
         textarea.select();
         document.execCommand("copy");
         alert(`Đã sao chép nội dung đơn #${o.id}`);
+      }
+    });
+
+    // ✅ NEW: click "Đã mua" => xóa đơn
+    btnBought.addEventListener("click", async () => {
+      const ok = confirm(
+        `Xác nhận: Đơn #${o.id} đã mua và sẽ bị XÓA khỏi lịch sử?`
+      );
+      if (!ok) return;
+
+      btnBought.disabled = true;
+      btnBought.textContent = "Đang xóa...";
+
+      try {
+        await deleteOrder(o.id);
+        // Xóa card trên UI
+        card.remove();
+
+        // Nếu xóa hết đơn thì hiện empty
+        const listEl2 = document.getElementById("oh-list");
+        const emptyEl2 = document.getElementById("oh-empty");
+        if (!listEl2 || !emptyEl2) return;
+
+        if (listEl2.children.length === 0) {
+          emptyEl2.style.display = "block";
+        }
+      } catch (e) {
+        alert(e?.message || "Xóa đơn thất bại.");
+        btnBought.disabled = false;
+        btnBought.textContent = "✅ Đã mua";
       }
     });
 

@@ -7,6 +7,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Response,
 )
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -275,3 +276,26 @@ def list_orders(db: Session = Depends(get_db)):
             }
         )
     return result
+
+
+# ✅ NEW: DELETE /api/shop/orders/{order_id}
+# Bấm "Đã mua" sẽ gọi API này để xóa đơn khỏi DB
+@router.delete("/orders/{order_id}", status_code=204)
+def delete_order(order_id: int, db: Session = Depends(get_db)):
+    order = (
+        db.query(models.Order)
+        .filter(models.Order.id == order_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Xóa order_items trước để tránh lỗi khóa ngoại (nếu bạn chưa set cascade)
+    db.query(models.OrderItem).filter(models.OrderItem.order_id == order_id).delete()
+
+    # Xóa order
+    db.delete(order)
+    db.commit()
+
+    # 204 No Content
+    return Response(status_code=204)
