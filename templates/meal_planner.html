@@ -1,316 +1,811 @@
-{% extends "base.html" %}
-
-{% block title %}
-Lịch ăn uống hằng tuần – Yuki Meal Planner
-{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Meal Planner{% endblock %} {% block
+content %}
 
 <style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --muted: #64748b;
+    --text: #0f172a;
+    --soft: #f1f5f9;
+  }
+  body {
+    background: var(--bg);
+  }
+
   .planner-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 12px 8px 48px;
+    padding: 14px 10px 48px;
   }
-
-  .planner-header-row {
+  .title-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     margin-bottom: 10px;
   }
-
-  .planner-title {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #0f172a;
+  .title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--text);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+  }
+  .subtitle {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: 0.92rem;
   }
 
-  .planner-title span.emoji {
-    font-size: 1.6rem;
+  /* ===== Summary cards ===== */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 12px;
+    margin: 12px 0 14px;
   }
-
-  .planner-subtitle {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #64748b;
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
   }
-
-  .planner-toolbar {
+  .card-h {
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 12px 0 16px;
     gap: 10px;
-    flex-wrap: wrap;
-    background: #f8fafc;
-    padding: 8px 12px;
+  }
+  .card-h h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
     border-radius: 999px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e0e7ff;
+    background: #eef2ff;
+    color: #475569;
+    white-space: nowrap;
+  }
+  .card-b {
+    padding: 12px 14px 14px;
+  }
+  .note {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 0.85rem;
   }
 
-  .planner-toolbar-left {
+  .mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .mini-table th,
+  .mini-table td {
+    border-bottom: 1px solid var(--border);
+    padding: 8px 6px;
+    vertical-align: top;
+  }
+  .mini-table th {
+    text-align: left;
+    background: #f9fafb;
+    color: #334155;
+    font-weight: 800;
+  }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .kpi {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px;
+    background: #fff;
+  }
+  .kpi .l {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .kpi .v {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: var(--text);
+  }
+
+  @media (max-width: 980px) {
+    .summary-grid {
+      grid-template-columns: 1fr;
+    }
+    .kpi-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* ===== Toolbar ===== */
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 12px;
+    margin: 10px 0 14px;
+  }
+  .toolbar .left {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
   }
-
-  .planner-toolbar button {
+  .toolbar .right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn {
     border-radius: 999px;
-    padding: 6px 12px;
+    padding: 7px 12px;
     border: 1px solid #cbd5e1;
-    background: #ffffff;
-    font-size: 0.85rem;
+    background: #fff;
+    font-size: 0.86rem;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    transition: background 0.2s, transform 0.1s, box-shadow 0.1s;
+    gap: 6px;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
   }
-
-  .planner-toolbar button:hover {
+  .btn:hover {
     background: #e2e8f0;
     transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(148, 163, 184, 0.4);
+    box-shadow: 0 2px 6px rgba(148, 163, 184, 0.35);
   }
-
-  .planner-toolbar button:active {
+  .btn:active {
     transform: translateY(0);
     box-shadow: none;
   }
-
   .week-label {
-    font-size: 0.85rem;
-    color: #475569;
-    font-weight: 500;
+    font-size: 0.86rem;
+    color: #334155;
+    font-weight: 700;
   }
 
   /* ===== Calendar ===== */
   .calendar-grid {
     display: grid;
     grid-template-columns: 120px repeat(7, 1fr);
-    border: 1px solid #e2e8f0;
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     overflow: hidden;
-    background: #ffffff;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-    margin-bottom: 24px;
+    margin-bottom: 18px;
   }
-
-  .calendar-header {
-    background: #f1f5f9;
+  .cal-head {
+    background: var(--soft);
     padding: 10px 6px;
     text-align: center;
-    font-weight: 600;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 800;
+    font-size: 0.82rem;
   }
-
-  .calendar-header span.date {
-    display: block;
-    font-size: 0.9rem;
-    color: #0f172a;
-  }
-
-  .calendar-header span.iso {
+  .cal-head .iso {
     display: block;
     font-size: 0.72rem;
     color: #94a3b8;
+    font-weight: 600;
+    margin-top: 2px;
   }
 
-  .calendar-slot-label {
+  .slot-label {
     background: #f8fafc;
     padding: 12px 10px;
-    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    font-weight: 800;
+    color: #0f172a;
     font-size: 0.9rem;
-    border-bottom: 1px solid #e2e8f0;
-    border-right: 1px solid #e2e8f0;
   }
-
-  .calendar-cell {
-    min-height: 80px;
-    padding: 6px 8px;
-    border-bottom: 1px solid #e2e8f0;
-    border-right: 1px solid #e2e8f0;
-    background: #ffffff;
-    font-size: 0.8rem;
+  .cell {
+    min-height: 86px;
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: #fff;
+    font-size: 0.82rem;
     cursor: pointer;
-    transition: background 0.15s;
+    position: relative;
+    transition: background 0.12s;
   }
-
-  .calendar-cell:hover {
+  .cell:hover {
     background: #f8fafc;
   }
-
-  .calendar-grid > div:nth-child(8n) {
-    border-right: none;
-  }
-
-  .calendar-cell.highlight-drop {
+  .cell.drop {
     outline: 2px dashed #22c55e;
     outline-offset: -3px;
     background: #f0fdf4 !important;
   }
-
-  .meal-tag {
+  .placeholder {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.78rem;
+  }
+  .tag {
     display: inline-block;
-    padding: 3px 6px;
+    padding: 3px 9px;
     border-radius: 999px;
-    margin-bottom: 3px;
     font-size: 0.75rem;
-    line-height: 1.2;
+    font-weight: 800;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-weight: 500;
   }
-
-  .meal-tag.student {
+  .tag.student {
     background: #eff6ff;
     color: #1d4ed8;
   }
-
-  .meal-tag.gym {
+  .tag.gym {
     background: #ecfdf5;
     color: #047857;
   }
+  .hint {
+    margin-top: 4px;
+    color: #94a3b8;
+    font-size: 0.76rem;
+  }
 
   /* ===== Recipe lists ===== */
-  .planner-section-title {
-    margin-top: 8px;
-    margin-bottom: 6px;
+  .section-title {
+    margin: 12px 0 6px;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 900;
     color: #0f172a;
     display: flex;
     align-items: center;
     gap: 6px;
   }
-
-  .small-muted {
-    font-size: 0.8rem;
-    color: #64748b;
-    margin-bottom: 8px;
+  .section-sub {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 0.85rem;
   }
 
-  .recipes-list {
+  .recipes {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
     gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
-
-  .recipe-card {
-    border-radius: 12px;
-    padding: 10px 10px 9px;
-    background: #ffffff;
+  .r-card {
+    background: #fff;
     border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
     cursor: grab;
     transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
   }
-
-  .recipe-card:hover {
+  .r-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1);
     border-color: #bfdbfe;
   }
-
-  .recipe-card-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 2px;
+  .r-title {
+    font-weight: 900;
     color: #0f172a;
+    margin-bottom: 2px;
   }
-
-  .recipe-card-note {
-    font-size: 0.8rem;
+  .r-note {
     color: #6b7280;
-    margin-bottom: 4px;
+    font-size: 0.82rem;
+    margin-bottom: 6px;
   }
-
   .chip {
     display: inline-block;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 999px;
-    font-size: 0.75rem;
+    border: 1px solid #e5e7eb;
     background: #f3f4f6;
     color: #4b5563;
-    margin-top: 2px;
+    font-size: 0.75rem;
+    font-weight: 700;
   }
 
-  @media (max-width: 900px) {
-    .calendar-grid {
-      font-size: 0.75rem;
+  /* ===== Print ===== */
+  @media print {
+    body * {
+      visibility: hidden;
     }
-
-    .calendar-slot-label {
-      font-size: 0.8rem;
+    #print-area,
+    #print-area * {
+      visibility: visible;
+    }
+    #print-area {
+      display: block !important;
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      background: #fff;
     }
   }
 </style>
 
 <div class="planner-container">
-  <div class="planner-header-row">
+  <div class="title-row">
     <div>
-      <div class="planner-title">
-        <span class="emoji">📅</span>
-        <span>Lịch ăn uống hằng tuần</span>
-      </div>
-      <p class="planner-subtitle">
-        Lên kế hoạch bữa ăn cho sinh viên & người tập gym bằng cách kéo công thức vào từng ngày, từng bữa.
+      <div class="title">📅 Meal Planner – Lịch ăn uống</div>
+      <p class="subtitle">
+        Kéo thả món ăn vào lịch tuần (Sáng/Trưa/Tối). Xuất PDF Ngày/Tuần để đánh
+        giá chế độ ăn (số liệu minh hoạ).
       </p>
     </div>
   </div>
 
-  <!-- Thanh điều khiển lịch -->
-  <div class="planner-toolbar">
-    <div class="planner-toolbar-left">
-      <button id="prev-week-btn">
-        <i class="fa-solid fa-chevron-left"></i>
-        Tuần trước
-      </button>
-      <button id="today-week-btn">
-        <i class="fa-regular fa-calendar-check"></i>
-        Tuần hiện tại
-      </button>
-      <button id="next-week-btn">
-        Tuần sau
-        <i class="fa-solid fa-chevron-right"></i>
-      </button>
+  <!-- Summary / đánh giá minh hoạ -->
+  <div class="summary-grid">
+    <div class="card" id="daily-sample">
+      <div class="card-h">
+        <h3>☀️ Thực đơn 1 ngày mẫu</h3>
+        <span class="badge">Minh hoạ</span>
+      </div>
+      <div class="card-b">
+        <p class="note">
+          Mục đích: cho người xem đánh giá nhanh logic chế độ ăn (không cần đúng
+          số liệu dinh dưỡng).
+        </p>
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th style="width: 18%">Bữa</th>
+              <th>Món ăn</th>
+              <th style="width: 18%">Năng lượng</th>
+              <th style="width: 22%">Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Sáng</b></td>
+              <td>Bánh mì trứng + sữa</td>
+              <td>~350 kcal</td>
+              <td>Đủ năng lượng</td>
+            </tr>
+            <tr>
+              <td><b>Trưa</b></td>
+              <td>Cơm + ức gà + rau</td>
+              <td>~520 kcal</td>
+              <td>Cân bằng</td>
+            </tr>
+            <tr>
+              <td><b>Tối</b></td>
+              <td>Salad + trái cây</td>
+              <td>~320 kcal</td>
+              <td>Nhẹ, dễ tiêu</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="l">🔥 Tổng kcal</div>
+            <div class="v">~1,190</div>
+          </div>
+          <div class="kpi">
+            <div class="l">🥩 Đạm</div>
+            <div class="v">Minh hoạ</div>
+          </div>
+          <div class="kpi">
+            <div class="l">🥦 Rau</div>
+            <div class="v">Minh hoạ</div>
+          </div>
+          <div class="kpi">
+            <div class="l">✅ Đánh giá</div>
+            <div class="v">Khá ổn</div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="week-label" id="week-range-label"></div>
+
+    <div class="card" id="weekly-sample">
+      <div class="card-h">
+        <h3>🗓️ Tổng quan 1 tuần mẫu</h3>
+        <span class="badge">Report</span>
+      </div>
+      <div class="card-b">
+        <p class="note">
+          Nhìn tổng thể 7 ngày để nhận xét: đa dạng món, đạm/rau, có ngày eat
+          clean xen kẽ không.
+        </p>
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th style="width: 26%">Ngày</th>
+              <th>Đặc điểm</th>
+              <th style="width: 30%">Nhận xét</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Thứ 2</b></td>
+              <td>Tinh bột vừa</td>
+              <td>Hợp ngày học</td>
+            </tr>
+            <tr>
+              <td><b>Thứ 3</b></td>
+              <td>Eat clean nhẹ</td>
+              <td>Giảm dầu</td>
+            </tr>
+            <tr>
+              <td><b>Thứ 4</b></td>
+              <td>Đạm cao</td>
+              <td>Hợp ngày tập</td>
+            </tr>
+            <tr>
+              <td><b>Thứ 5</b></td>
+              <td>Cân bằng</td>
+              <td>Ổn định</td>
+            </tr>
+            <tr>
+              <td><b>Thứ 6</b></td>
+              <td>Thiếu rau</td>
+              <td>Bổ sung canh</td>
+            </tr>
+            <tr>
+              <td><b>Thứ 7</b></td>
+              <td>Thoải mái</td>
+              <td>Không quá nghiêm</td>
+            </tr>
+            <tr>
+              <td><b>CN</b></td>
+              <td>Nhẹ nhàng</td>
+              <td>Dễ tiêu</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
-  <!-- BẢNG LỊCH TUẦN -->
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="left">
+      <button class="btn" id="prev-week-btn">⬅ Tuần trước</button>
+      <button class="btn" id="today-week-btn">📅 Tuần hiện tại</button>
+      <button class="btn" id="next-week-btn">Tuần sau ➡</button>
+    </div>
+    <div class="right">
+      <span class="week-label" id="week-range-label"></span>
+      <button class="btn" id="export-day-pdf-btn">📄 PDF Ngày</button>
+      <button class="btn" id="export-week-pdf-btn">📊 PDF Tuần</button>
+    </div>
+  </div>
+
+  <!-- Calendar -->
   <div id="calendar-root"></div>
 
-  <!-- DANH SÁCH MÓN: SINH VIÊN -->
-  <h3 class="planner-section-title">
-    <span>🍚</span>
-    <span>Món cho sinh viên ở trọ</span>
-  </h3>
-  <p class="small-muted">
-    Kéo món từ danh sách này và thả vào ô <strong>Bữa sáng / Bữa trưa / Bữa tối</strong> trên lịch.
+  <!-- Recipe lists -->
+  <div class="section-title">🍚 Món cho sinh viên ở trọ</div>
+  <p class="section-sub">
+    Kéo món từ dưới lên các ô lịch. Ô trống sẽ hiển thị “Kéo món vào đây”.
+    (Chuột phải vào ô để xoá món)
   </p>
-  <div id="student-recipes" class="recipes-list"></div>
+  <div id="student-recipes" class="recipes"></div>
 
-  <!-- DANH SÁCH MÓN: GYM / EAT CLEAN -->
-  <h3 class="planner-section-title">
-    <span>💪</span>
-    <span>Món cho Gym / Eat clean</span>
-  </h3>
-  <p class="small-muted">
-    Các món có <code>category = "healthy"</code>. Kéo thả lên lịch như bình thường để lên thực đơn giảm cân / tăng cơ.
+  <div class="section-title">💪 Món Gym / Eat clean</div>
+  <p class="section-sub">
+    Danh sách món healthy. Kéo thả để lên thực đơn tăng cơ/giảm mỡ (minh hoạ).
   </p>
-  <div id="gym-recipes" class="recipes-list"></div>
+  <div id="gym-recipes" class="recipes"></div>
 </div>
 
-<script src="/static/js/meal_planner.js"></script>
+<!-- Print area -->
+<div id="print-area" style="display: none"></div>
 
+<script>
+  // meal_planner.js sẽ cập nhật khi click ô
+  window.__selectedDayISO = new Date().toISOString().slice(0, 10);
+
+  function buildPrintHTML({ title, subTitle, contentHTML }) {
+    return `
+      <div style="font-family: Arial, sans-serif; padding: 18px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div>
+            <h2 style="margin:0 0 6px; color:#0f172a;">${title}</h2>
+            <div style="margin:0 0 12px; color:#64748b; font-size: 13px;">${
+              subTitle || ""
+            }</div>
+          </div>
+          <div style="font-size:12px; color:#94a3b8; text-align:right;">
+            Meal Planner<br/>Xuất PDF (minh hoạ)
+          </div>
+        </div>
+        <div>${contentHTML}</div>
+        <div style="margin-top:14px; color:#94a3b8; font-size: 12px;">
+          Gợi ý: Ctrl+P → Save as PDF
+        </div>
+      </div>
+    `;
+  }
+
+  /* =========================
+     PDF NGÀY: BẢNG 3 BỮA ĐẸP
+     ========================= */
+  function exportDayPDF() {
+    const selectedDayISO =
+      window.__selectedDayISO || new Date().toISOString().slice(0, 10);
+
+    const breakfastCell = document.querySelector(
+      `.cell[data-date="${selectedDayISO}"][data-meal-type="breakfast"]`
+    );
+    const lunchCell = document.querySelector(
+      `.cell[data-date="${selectedDayISO}"][data-meal-type="lunch"]`
+    );
+    const dinnerCell = document.querySelector(
+      `.cell[data-date="${selectedDayISO}"][data-meal-type="dinner"]`
+    );
+
+    const getTitle = (cell) =>
+      (cell?.getAttribute("data-recipe-title") || "").trim();
+    const bTitle = getTitle(breakfastCell) || "Chưa có món";
+    const lTitle = getTitle(lunchCell) || "Chưa có món";
+    const dTitle = getTitle(dinnerCell) || "Chưa có món";
+
+    // kcal minh hoạ
+    const kcalFor = (title, base) =>
+      title === "Chưa có món" ? "-" : `~${base} kcal`;
+    const bKcal = kcalFor(bTitle, 320);
+    const lKcal = kcalFor(lTitle, 520);
+    const dKcal = kcalFor(dTitle, 380);
+
+    const sumKcal = () => {
+      const toNum = (s) => (String(s).match(/~(\d+)/) ? Number(RegExp.$1) : 0);
+      const total = toNum(bKcal) + toNum(lKcal) + toNum(dKcal);
+      return total ? `~${total} kcal` : "-";
+    };
+
+    const html = `
+      <style>
+        .pdf-badge{display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;color:#334155;margin-right:6px;}
+        .pdf-table{width:100%;border-collapse:collapse;font-size:13px;}
+        .pdf-table th,.pdf-table td{border:1px solid #e2e8f0;padding:10px 8px;vertical-align:top;}
+        .pdf-table th{background:#f1f5f9;text-align:left;color:#0f172a;}
+        .pdf-muted{color:#64748b;font-size:12px;}
+        .pdf-kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+        .pdf-kpi .box{border:1px solid #e2e8f0;border-radius:12px;padding:10px;min-width:170px;}
+        .pdf-kpi .l{font-size:12px;color:#64748b;}
+        .pdf-kpi .v{font-size:14px;font-weight:900;color:#0f172a;margin-top:2px;}
+      </style>
+
+      <div style="margin-bottom:10px;">
+        <span class="pdf-badge">Ngày: ${selectedDayISO}</span>
+        <span class="pdf-badge">Số liệu minh hoạ</span>
+      </div>
+
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th style="width:18%;">Bữa</th>
+            <th>Món ăn</th>
+            <th style="width:18%;">Năng lượng</th>
+            <th style="width:26%;">Nhận xét</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><b>🍳 Sáng</b></td><td>${bTitle}</td><td>${bKcal}</td><td class="pdf-muted">Nạp năng lượng đầu ngày</td></tr>
+          <tr><td><b>🍱 Trưa</b></td><td>${lTitle}</td><td>${lKcal}</td><td class="pdf-muted">Cân bằng đạm – tinh bột</td></tr>
+          <tr><td><b>🥗 Tối</b></td><td>${dTitle}</td><td>${dKcal}</td><td class="pdf-muted">Nhẹ, dễ tiêu hoá</td></tr>
+        </tbody>
+      </table>
+
+      <div class="pdf-kpi">
+        <div class="box"><div class="l">🔥 Tổng kcal (minh hoạ)</div><div class="v">${sumKcal()}</div></div>
+        <div class="box"><div class="l">🥩 Đạm</div><div class="v">Minh hoạ</div></div>
+        <div class="box"><div class="l">🥦 Rau xanh</div><div class="v">Minh hoạ</div></div>
+      </div>
+
+      <p class="pdf-muted" style="margin-top:10px;">
+        Ghi chú: PDF Ngày lấy dữ liệu từ các món bạn đã kéo thả vào lịch tuần.
+      </p>
+    `;
+
+    document.getElementById("print-area").innerHTML = buildPrintHTML({
+      title: "BÁO CÁO THỰC ĐƠN NGÀY",
+      subTitle:
+        "Bảng 3 bữa (Sáng/Trưa/Tối) – phục vụ đánh giá chế độ ăn (minh hoạ).",
+      contentHTML: html,
+    });
+    window.print();
+  }
+
+  /* =========================
+     PDF TUẦN: REPORT ĐẸP
+     ========================= */
+  function exportWeekPDF() {
+    const weekLabel =
+      document.getElementById("week-range-label")?.innerText || "";
+
+    // lấy 7 ngày từ header ISO trong grid
+    const dayISO = Array.from(document.querySelectorAll(".cal-head .iso")).map(
+      (x) => x.textContent.trim()
+    );
+    // dayISO gồm 7 phần tử (Mon->Sun)
+
+    // gom dữ liệu theo ngày: {date: {breakfast, lunch, dinner}}
+    const byDay = {};
+    dayISO.forEach(
+      (d) =>
+        (byDay[d] = {
+          breakfast: "Chưa có món",
+          lunch: "Chưa có món",
+          dinner: "Chưa có món",
+        })
+    );
+
+    document.querySelectorAll(".cell").forEach((cell) => {
+      const d = cell.getAttribute("data-date");
+      const mt = cell.getAttribute("data-meal-type");
+      const title =
+        (cell.getAttribute("data-recipe-title") || "").trim() || "Chưa có món";
+      if (byDay[d] && byDay[d][mt] !== undefined) byDay[d][mt] = title;
+    });
+
+    // thống kê minh hoạ
+    let plannedMeals = 0;
+    let emptyMeals = 0;
+    let gymCount = 0;
+    let studentCount = 0;
+
+    document.querySelectorAll(".cell").forEach((cell) => {
+      const title = (cell.getAttribute("data-recipe-title") || "").trim();
+      if (!title) {
+        emptyMeals++;
+        return;
+      }
+      plannedMeals++;
+
+      const cls = cell.getAttribute("data-recipe-class") || "";
+      if (cls === "gym") gymCount++;
+      else if (cls === "student") studentCount++;
+    });
+
+    const diversityNote =
+      plannedMeals >= 12
+        ? "Khá đa dạng"
+        : plannedMeals >= 6
+        ? "Trung bình"
+        : "Còn ít";
+    const balanceNote =
+      gymCount > 0 && studentCount > 0
+        ? "Có cân bằng nhóm món"
+        : "Nên xen kẽ nhóm món";
+
+    // bảng tổng hợp 7 ngày
+    let rows = "";
+    dayISO.forEach((d) => {
+      const b = byDay[d].breakfast;
+      const l = byDay[d].lunch;
+      const di = byDay[d].dinner;
+
+      // kcal minh hoạ theo ngày: nếu đủ 3 bữa thì ~1200..1500, nếu ít thì thấp
+      const countInDay = [b, l, di].filter((x) => x !== "Chưa có món").length;
+      const kcal =
+        countInDay === 3
+          ? "~1,250 kcal"
+          : countInDay === 2
+          ? "~900 kcal"
+          : countInDay === 1
+          ? "~450 kcal"
+          : "-";
+
+      rows += `
+        <tr>
+          <td style="white-space:nowrap;"><b>${d}</b></td>
+          <td>${b}</td>
+          <td>${l}</td>
+          <td>${di}</td>
+          <td style="white-space:nowrap;">${kcal}</td>
+        </tr>
+      `;
+    });
+
+    const html = `
+      <style>
+        .pdf-badge{display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;color:#334155;margin-right:6px;}
+        .pdf-table{width:100%;border-collapse:collapse;font-size:12.8px;}
+        .pdf-table th,.pdf-table td{border:1px solid #e2e8f0;padding:9px 8px;vertical-align:top;}
+        .pdf-table th{background:#f1f5f9;text-align:left;color:#0f172a;}
+        .pdf-muted{color:#64748b;font-size:12px;}
+        .pdf-kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+        .pdf-kpi .box{border:1px solid #e2e8f0;border-radius:12px;padding:10px;min-width:190px;}
+        .pdf-kpi .l{font-size:12px;color:#64748b;}
+        .pdf-kpi .v{font-size:14px;font-weight:900;color:#0f172a;margin-top:2px;}
+        .sec{margin-top:14px;}
+        .sec h3{margin:0 0 8px;color:#0f172a;}
+        .ul{margin:6px 0 0; padding-left:18px;}
+      </style>
+
+      <div style="margin-bottom:10px;">
+        <span class="pdf-badge">Tuần: ${weekLabel}</span>
+        <span class="pdf-badge">Report minh hoạ</span>
+      </div>
+
+      <div class="sec">
+        <h3>1) Bảng tổng hợp thực đơn tuần</h3>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th style="width:12%;">Ngày</th>
+              <th style="width:26%;">Sáng</th>
+              <th style="width:26%;">Trưa</th>
+              <th style="width:26%;">Tối</th>
+              <th style="width:10%;">Kcal</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="pdf-muted" style="margin-top:6px;">Kcal chỉ mang tính minh hoạ để người xem đánh giá logic phân bổ bữa ăn.</div>
+      </div>
+
+      <div class="sec">
+        <h3>2) Thống kê nhanh</h3>
+        <div class="pdf-kpi">
+          <div class="box"><div class="l">✅ Số bữa đã lên kế hoạch</div><div class="v">${plannedMeals} / 21</div></div>
+          <div class="box"><div class="l">🍚 Món sinh viên</div><div class="v">${studentCount}</div></div>
+          <div class="box"><div class="l">💪 Món gym / healthy</div><div class="v">${gymCount}</div></div>
+          <div class="box"><div class="l">🌈 Độ đa dạng</div><div class="v">${diversityNote}</div></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3>3) Nhận xét & gợi ý cải thiện</h3>
+        <ul class="ul">
+          <li>Phân bổ bữa: <b>${
+            plannedMeals >= 9 ? "khá ổn" : "cần bổ sung thêm bữa trống"
+          }</b>.</li>
+          <li>Cân bằng nhóm món: <b>${balanceNote}</b>.</li>
+          <li>Gợi ý: tăng rau xanh/đạm vào ngày thiếu bữa; xen kẽ 1–2 ngày eat clean để cân bằng.</li>
+        </ul>
+        <p class="pdf-muted" style="margin-top:8px;">Report phục vụ đánh giá chế độ ăn trong bài tiểu luận, không yêu cầu đúng số liệu dinh dưỡng.</p>
+      </div>
+    `;
+
+    document.getElementById("print-area").innerHTML = buildPrintHTML({
+      title: "BÁO CÁO THỰC ĐƠN TUẦN",
+      subTitle:
+        "Tổng hợp 7 ngày (Sáng/Trưa/Tối) + thống kê minh hoạ + nhận xét.",
+      contentHTML: html,
+    });
+    window.print();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document
+      .getElementById("export-day-pdf-btn")
+      ?.addEventListener("click", exportDayPDF);
+    document
+      .getElementById("export-week-pdf-btn")
+      ?.addEventListener("click", exportWeekPDF);
+  });
+</script>
+
+<script src="/static/js/meal_planner.js"></script>
 {% endblock %}
