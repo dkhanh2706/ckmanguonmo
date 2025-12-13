@@ -1,9 +1,7 @@
+from typing import Literal
 from pydantic import BaseModel, EmailStr
 
 
-# ===========================
-# USER SCHEMAS
-# ===========================
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str | None = None
@@ -25,15 +23,12 @@ class UserOut(UserBase):
         from_attributes = True
 
 
-# ===========================
-# RECIPE SCHEMAS
-# ===========================
 class RecipeBase(BaseModel):
     title: str
     ingredients: str
     steps: str
     note: str | None = None
-    category: str | None = None  # healthy, chay, keto, canh...
+    category: str | None = None
 
 
 class RecipeCreate(RecipeBase):
@@ -46,3 +41,7 @@ class RecipeOut(RecipeBase):
 
     class Config:
         from_attributes = True
+
+
+class RecipeOutWithSource(RecipeOut):
+    source: Literal["student", "gym"]
