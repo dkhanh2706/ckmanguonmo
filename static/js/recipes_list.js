@@ -16,7 +16,7 @@ const DEFAULT_IMAGES = [
 let defaultRecipes = [];
 let userRecipes = [];
 
-// Map title -> id trong DB (để gợi ý map sang DB)
+// Map title -> id trong DB (để gợi ý map sang DB khi cần)
 let dbTitleToId = new Map();
 
 const defaultListEl = document.getElementById("default-recipes-list");
@@ -36,8 +36,8 @@ const reviewCommentEl = document.getElementById("review-comment");
 const btnReviewCancel = document.getElementById("btn-review-cancel");
 const btnReviewSubmit = document.getElementById("btn-review-submit");
 
-// Lưu recipe đang đánh giá (cả source + data)
-let currentReviewRecipe = null; // {source, id, title, ingredients, steps, note, category, image}
+// recipe đang đánh giá: {source, id, title, ingredients, steps, note, category, image}
+let currentReviewRecipe = null;
 let currentSelectedRating = 0;
 
 // =======================
@@ -70,6 +70,7 @@ function buildImageUrl(image) {
   let path = String(image).trim();
   if (!path) return null;
 
+  // absolute url / data url
   if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) return path;
 
   if (path.startsWith("/")) path = path.slice(1);
@@ -78,6 +79,8 @@ function buildImageUrl(image) {
   if (path.startsWith("static/")) {
     // ok
   } else if (path.startsWith("uploads/")) {
+    path = "static/" + path;
+  } else if (path.startsWith("default/")) {
     path = "static/" + path;
   } else {
     path = "static/uploads/" + path;
@@ -117,7 +120,7 @@ function setStarPicker(rating) {
 function openReviewModal(recipeObj) {
   if (!reviewModal) return;
 
-  currentReviewRecipe = recipeObj; // lưu cả source + data
+  currentReviewRecipe = recipeObj;
   setStarPicker(0);
 
   if (reviewerNameEl) reviewerNameEl.value = "";
@@ -142,6 +145,7 @@ if (starPicker) {
     setStarPicker(v);
   });
 
+  // hover effect
   starPicker.addEventListener("mousemove", (e) => {
     const sp = e.target.closest("span[data-v]");
     if (!sp) return;
@@ -182,16 +186,29 @@ function createRatingRow(recipe, source) {
   const avg = safeNumber(recipe.avg_rating, 0);
   const count = safeNumber(recipe.review_count, 0);
 
+  // ⭐ thêm nút dinh dưỡng dưới nút đánh giá
   return `
-    <div class="recipe-rating-row">
-      <span class="stars" title="Điểm trung bình: ${avg.toFixed(2)}">${renderStars(avg)}</span>
-      <span class="rating-count">(${count})</span>
-      <button type="button" class="btn-review"
-              data-action="review"
-              data-source="${source}"
-              data-id="${recipe.id}">
-        Đánh giá
-      </button>
+    <div class="recipe-rating-row" style="align-items:flex-start;">
+      <div>
+        <span class="stars" title="Điểm trung bình: ${avg.toFixed(2)}">${renderStars(avg)}</span>
+        <span class="rating-count">(${count})</span>
+      </div>
+
+      <div class="rating-actions" style="margin-left:auto; display:flex; flex-direction:column; gap:6px;">
+        <button type="button" class="btn-review"
+                data-action="review"
+                data-source="${source}"
+                data-id="${recipe.id}">
+          Đánh giá
+        </button>
+
+        <button type="button" class="btn-review"
+                data-action="nutrition"
+                data-source="${source}"
+                data-id="${recipe.id}">
+          🥗 Dinh dưỡng
+        </button>
+      </div>
     </div>
   `;
 }
@@ -373,9 +390,7 @@ async function loadUserRecipes() {
     if (!res.ok) throw new Error("Failed to load recipes");
     userRecipes = await res.json();
 
-    // build map title->id để gợi ý map sang DB
     rebuildDbTitleMap();
-
     renderUserRecipes();
   } catch (err) {
     console.error(err);
@@ -399,16 +414,12 @@ function applySearch() {
 // =======================
 
 async function ensureRecipeExistsInDb(recipeObj) {
-  // Nếu là recipe user -> chắc chắn có trong DB, dùng luôn id
   if (recipeObj.source === "user") return Number(recipeObj.id);
 
-  // Nếu là default: thử map theo title trước
   const key = String(recipeObj.title || "").trim().toLowerCase();
-  if (key && dbTitleToId.has(key)) {
-    return dbTitleToId.get(key);
-  }
+  if (key && dbTitleToId.has(key)) return dbTitleToId.get(key);
 
-  // Chưa có trong DB -> tạo mới
+  // tạo recipe mới trong DB từ default
   const fd = new FormData();
   fd.append("title", recipeObj.title || "Công thức gợi ý");
   fd.append("ingredients", recipeObj.ingredients || "");
@@ -416,20 +427,13 @@ async function ensureRecipeExistsInDb(recipeObj) {
   fd.append("note", recipeObj.note || "");
   fd.append("category", recipeObj.category || "");
 
-  const res = await fetch("/api/recipes/", {
-    method: "POST",
-    body: fd,
-  });
-
+  const res = await fetch("/api/recipes/", { method: "POST", body: fd });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.detail || "Không tạo được recipe vào DB");
-  }
+  if (!res.ok) throw new Error(data.detail || "Không tạo được recipe vào DB");
 
   const newId = Number(data.id);
   if (key && Number.isFinite(newId)) dbTitleToId.set(key, newId);
 
-  // reload userRecipes để UI đồng bộ (tuỳ bạn)
   await loadUserRecipes();
   applySearch();
 
@@ -442,8 +446,6 @@ async function fetchAndRefreshRecipeStats(recipeId) {
     if (!res.ok) return;
     const data = await res.json();
 
-    // update stats in arrays by matching id in DB for userRecipes,
-    // và matching title for defaultRecipes
     const avg = safeNumber(data.avg_rating, 0);
     const cnt = safeNumber(data.review_count, 0);
 
@@ -455,14 +457,12 @@ async function fetchAndRefreshRecipeStats(recipeId) {
       userRecipes[uidx].review_count = cnt;
     }
 
-    // update defaultRecipes by title map
+    // update defaultRecipes by title (nếu backend trả title)
     const t = String(data.title || "").trim().toLowerCase();
     if (t) {
       defaultRecipes = defaultRecipes.map((r) => {
         const rt = String(r.title || "").trim().toLowerCase();
-        if (rt === t) {
-          return { ...r, avg_rating: avg, review_count: cnt };
-        }
+        if (rt === t) return { ...r, avg_rating: avg, review_count: cnt };
         return r;
       });
     }
@@ -474,7 +474,7 @@ async function fetchAndRefreshRecipeStats(recipeId) {
 }
 
 // =======================
-// SỰ KIỆN CLICK: delete / review
+// CLICK HANDLER
 // =======================
 
 function handleListClick(e) {
@@ -524,6 +524,13 @@ function handleListClick(e) {
     openReviewModal(recipeObj);
     return;
   }
+
+  // ✅ NÚT DINH DƯỠNG
+  if (action === "nutrition") {
+    if (!id) return;
+    window.location.href = `/nutrition?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`;
+    return;
+  }
 }
 
 if (defaultListEl) defaultListEl.addEventListener("click", handleListClick);
@@ -554,7 +561,6 @@ async function submitReview() {
   }
 
   try {
-    // ✅ quan trọng: đảm bảo recipe tồn tại trong DB
     const dbRecipeId = await ensureRecipeExistsInDb(currentReviewRecipe);
 
     const fd = new FormData();
@@ -575,7 +581,6 @@ async function submitReview() {
 
     closeReviewModal();
     alert("✅ Đã gửi đánh giá thành công!");
-
     await fetchAndRefreshRecipeStats(dbRecipeId);
   } catch (err) {
     console.error(err);

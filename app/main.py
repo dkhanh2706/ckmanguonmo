@@ -1,10 +1,12 @@
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .database import Base, engine, SessionLocal
-from . import models
+from .database import Base, engine
+from . import models  # noqa: F401  (để SQLAlchemy/SQLModel nhận model)
 
 # Routers
 from .routes_auth import router as auth_router
@@ -16,121 +18,94 @@ from .routes_shop import router as shop_router
 from .routes_planner import router as planner_router
 
 
-app = FastAPI(title="Yuki Meal Planner")
+app = FastAPI(title="CK Mang Nguon Mo")
+
+# =========================
+# Paths (ROOT project)
+# =========================
+# File này nằm ở: /home/dkhanh/ckmanguonmo/app/main.py
+# Root project là: /home/dkhanh/ckmanguonmo
+ROOT_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = ROOT_DIR / "static"
+TEMPLATES_DIR = ROOT_DIR / "templates"
 
 # =========================
 # Static + Templates
 # =========================
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+if not STATIC_DIR.exists():
+    raise RuntimeError(f"Static directory not found: {STATIC_DIR}")
+if not TEMPLATES_DIR.exists():
+    raise RuntimeError(f"Templates directory not found: {TEMPLATES_DIR}")
 
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # =========================
-# Startup: create tables + seed data
+# DB init (create tables)
 # =========================
 @app.on_event("startup")
 def on_startup():
-    # Create tables
+    # Tạo bảng nếu chưa có (PostgreSQL/SQLite đều OK)
     Base.metadata.create_all(bind=engine)
 
-    # Seed (chỉ thêm khi DB trống)
-    db = SessionLocal()
-    try:
-        if db.query(models.Recipe).count() == 0:
-            db.add_all(
-                [
-                    models.Recipe(
-                        title="Cơm chiên trứng",
-                        ingredients="Cơm nguội; Trứng; Hành lá; Nước mắm; Dầu ăn",
-                        steps="1) Đánh trứng\n2) Phi hành\n3) Cho cơm vào đảo\n4) Thêm trứng\n5) Nêm nếm",
-                        note="15 phút - Dễ",
-                        category="chiên",
-                        image=None,
-                    ),
-                    models.Recipe(
-                        title="Canh rau cải thịt bằm",
-                        ingredients="Rau cải; Thịt bằm; Hành tím; Muối; Tiêu",
-                        steps="1) Phi hành\n2) Xào thịt\n3) Cho nước + rau\n4) Nêm nếm",
-                        note="20 phút - Dễ",
-                        category="canh",
-                        image=None,
-                    ),
-                ]
-            )
-            db.commit()
-
-        if db.query(models.Product).count() == 0:
-            db.add_all(
-                [
-                    models.Product(
-                        name="Ức gà fillet 1kg",
-                        price=89000,
-                        unit="gói",
-                        image=None,
-                        badge="Gym",
-                    ),
-                    models.Product(
-                        name="Dầu olive Extra Virgin 500ml",
-                        price=145000,
-                        unit="chai",
-                        image=None,
-                        badge="Ưu đãi",
-                    ),
-                ]
-            )
-            db.commit()
-    finally:
-        db.close()
-
-
 # =========================
-# Include routers (API)
+# Include API routers
 # =========================
+# Nếu router của bạn đã có prefix/tags bên trong thì giữ nguyên
 app.include_router(auth_router)
-app.include_router(recipes_router)  # /api/recipes + /api/recipes/{id}/reviews (nếu bạn đặt trong routes_recipes.py)
+app.include_router(recipes_router)
 app.include_router(default_recipes_router)
 app.include_router(student_planner_router)
 app.include_router(gym_planner_router)
 app.include_router(shop_router)
 app.include_router(planner_router)
 
-
 # =========================
-# Pages (HTML)
+# HTML pages (render templates)
 # =========================
 @app.get("/", response_class=HTMLResponse)
-def home(request: Request):
+def page_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/login", response_class=HTMLResponse)
+def page_login(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
-@app.get("/recipes", response_class=HTMLResponse)
-def page_recipes(request: Request):
-    return templates.TemplateResponse("recipes_list.html", {"request": request})
+@app.get("/register", response_class=HTMLResponse)
+def page_register(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
 
-
-@app.get("/recipes/new", response_class=HTMLResponse)
-def page_recipe_add(request: Request):
-    return templates.TemplateResponse("recipe_add.html", {"request": request})
-
-
-@app.get("/recipes/{recipe_id}/edit", response_class=HTMLResponse)
-def page_recipe_edit(request: Request, recipe_id: int):
-    return templates.TemplateResponse(
-        "recipe_edit.html",
-        {"request": request, "recipe_id": recipe_id},
-    )
-
+@app.get("/forgot", response_class=HTMLResponse)
+def page_forgot(request: Request):
+    return templates.TemplateResponse("forgot.html", {"request": request})
 
 @app.get("/meal-planner", response_class=HTMLResponse)
 def page_meal_planner(request: Request):
     return templates.TemplateResponse("meal_planner.html", {"request": request})
 
-
 @app.get("/shopping-list", response_class=HTMLResponse)
 def page_shopping_list(request: Request):
     return templates.TemplateResponse("shopping_list.html", {"request": request})
 
-
 @app.get("/order-history", response_class=HTMLResponse)
 def page_order_history(request: Request):
     return templates.TemplateResponse("order_history.html", {"request": request})
+
+@app.get("/nutrition", response_class=HTMLResponse)
+def page_nutrition(request: Request):
+    return templates.TemplateResponse("nutrition.html", {"request": request})
+
+@app.get("/recipes", response_class=HTMLResponse)
+def page_recipes_list(request: Request):
+    return templates.TemplateResponse("recipes_list.html", {"request": request})
+
+@app.get("/recipes/add", response_class=HTMLResponse)
+def page_recipe_add(request: Request):
+    return templates.TemplateResponse("recipe_add.html", {"request": request})
+
+@app.get("/recipes/edit/{recipe_id}", response_class=HTMLResponse)
+def page_recipe_edit(request: Request, recipe_id: int):
+    return templates.TemplateResponse(
+        "recipe_edit.html",
+        {"request": request, "recipe_id": recipe_id},
+    )
