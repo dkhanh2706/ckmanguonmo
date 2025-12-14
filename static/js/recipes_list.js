@@ -16,9 +16,58 @@ const DEFAULT_IMAGES = [
   DEFAULT_FALLBACK_IMG, // luôn để 1 ảnh tồn tại cuối cùng
 ];
 
-let defaultRecipes = [];
-let userRecipes = [];
+// =======================
+// MUA NGUYÊN LIỆU TỪ CÔNG THỨC GỢI Ý (3 MÓN)
+// =======================
+const PREFILL_KEY = "prefill_shop_from_recipes";
 
+// Tách nguyên liệu từ chuỗi (ưu tiên dấu ; theo hướng dẫn nhập liệu)
+function splitIngredients(raw = "") {
+  return String(raw)
+    .split(/;|,|\n/gi)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => {
+      // loại bỏ số lượng/đơn vị đơn giản (mang tính minh họa)
+      return s
+        .replace(/\b\d+([.,]\d+)?\b/g, "")
+        .replace(
+          /\b(kg|g|gram|ml|l|muỗng|muong|thìa|thia|tsp|tbsp|cup|chén|chen)\b/gi,
+          ""
+        )
+        .replace(/\s+/g, " ")
+        .trim();
+    })
+    .filter(Boolean);
+}
+
+function savePrefillAndGoShop(recipes = []) {
+  const titles = recipes.map((r) => r.title || "Món gợi ý").slice(0, 3);
+  const ingredients = recipes
+    .flatMap((r) => splitIngredients(r.ingredients || ""))
+    .map((x) => x.toLowerCase());
+
+  const uniq = Array.from(new Set(ingredients)).slice(0, 40);
+
+  localStorage.setItem(
+    PREFILL_KEY,
+    JSON.stringify({
+      titles,
+      ingredients: uniq,
+      ts: Date.now(),
+    })
+  );
+
+  // ✅ Nếu route shop của bạn khác, đổi lại URL này
+  window.location.href = "/shopping-list";
+}
+
+// Trạng thái dữ liệu
+let defaultRecipes = []; // 3 công thức gợi ý
+let userRecipes = []; // công thức của user
+let filteredUserRecipes = []; // sau khi search
+
+// DOM
 const defaultListEl = document.getElementById("default-recipes-list");
 const userListEl = document.getElementById("user-recipes-list");
 const emptyUserText = document.getElementById("user-recipes-empty");
@@ -41,7 +90,7 @@ function escapeHtml(str = "") {
 
 // Rút gọn text (ví dụ cho nguyên liệu)
 function truncate(text = "", maxLen = 80) {
-  const t = text.trim();
+  const t = String(text || "").trim();
   if (t.length <= maxLen) return t;
   return t.slice(0, maxLen - 3) + "...";
 }
@@ -49,43 +98,31 @@ function truncate(text = "", maxLen = 80) {
 // Chọn ảnh mặc định theo index (xoay vòng)
 function pickDefaultImage(index = 0) {
   if (!DEFAULT_IMAGES.length) return DEFAULT_FALLBACK_IMG;
-  const i = index % DEFAULT_IMAGES.length;
+  const i = Math.abs(index) % DEFAULT_IMAGES.length;
   return DEFAULT_IMAGES[i] || DEFAULT_FALLBACK_IMG;
 }
 
-// Build URL ảnh từ giá trị image trong DB / API
-// Trả về: string url hoặc null nếu không xây được
-function buildImageUrl(image) {
-  if (!image) return null;
-
-  let path = String(image).trim();
-  if (!path) return null;
-
-  // Trường hợp URL tuyệt đối (http, https, data)
-  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) {
-    return path;
+// Build image URL (nếu backend trả path tương đối)
+function buildImageUrl(imagePath) {
+  if (!imagePath) return "";
+  // Nếu đã là URL tuyệt đối hoặc bắt đầu bằng /static thì giữ nguyên
+  if (
+    String(imagePath).startsWith("http://") ||
+    String(imagePath).startsWith("https://") ||
+    String(imagePath).startsWith("/static/")
+  ) {
+    return imagePath;
   }
-
-  // Bỏ / đầu nếu có
-  if (path.startsWith("/")) path = path.slice(1);
-
-  // Nếu lỡ lưu "app/static/..."
-  if (path.startsWith("app/")) path = path.slice(4); // bỏ "app/"
-
-  if (path.startsWith("static/")) {
-    // ok, đã là static/...
-  } else if (path.startsWith("uploads/")) {
-    path = "static/" + path;
-  } else {
-    // fallback: cho vào static/uploads/
-    path = "static/uploads/" + path;
+  // Nếu backend trả dạng "uploads/xxx.jpg" thì ghép thành "/static/uploads/xxx.jpg"
+  if (String(imagePath).startsWith("uploads/")) {
+    return "/static/" + imagePath;
   }
-
-  return "/" + path;
+  // Còn lại: trả về nguyên gốc
+  return imagePath;
 }
 
 // =======================
-// TẠO HTML CARD
+// RENDER CARD
 // =======================
 
 // Card cho công thức gợi ý
@@ -110,6 +147,7 @@ function createDefaultCard(recipe, index) {
         <h3 class="recipe-card-title">${title}</h3>
         <p class="recipe-card-meta">${category}</p>
         ${note ? `<p class="recipe-card-note">${note}</p>` : ""}
+
         ${
           ingredientsShort
             ? `<p class="recipe-card-ingredients"><strong>Nguyên liệu chính:</strong> ${escapeHtml(
@@ -117,6 +155,12 @@ function createDefaultCard(recipe, index) {
               )}</p>`
             : ""
         }
+
+        <div class="recipe-card-actions">
+          <button class="btn-card" type="button" data-action="buy-default" data-index="${index}">
+            🛒 Mua nguyên liệu
+          </button>
+        </div>
       </div>
     </article>
   `;
@@ -133,17 +177,19 @@ function createUserCard(recipe, index) {
   const ingredientsShort = truncate(recipe.ingredients || "", 80);
 
   return `
-    <article class="recipe-card user-card">
+    <article class="recipe-card user-card" data-id="${recipe.id}">
       <div class="recipe-card-thumb">
         <img src="${imgUrl}" alt="${title}"
              loading="lazy"
              onerror="this.src='${DEFAULT_FALLBACK_IMG}'" />
         <span class="badge badge-user">Của bạn</span>
       </div>
+
       <div class="recipe-card-body">
         <h3 class="recipe-card-title">${title}</h3>
         <p class="recipe-card-meta">${category}</p>
         ${note ? `<p class="recipe-card-note">${note}</p>` : ""}
+
         ${
           ingredientsShort
             ? `<p class="recipe-card-ingredients"><strong>Nguyên liệu:</strong> ${escapeHtml(
@@ -153,14 +199,8 @@ function createUserCard(recipe, index) {
         }
 
         <div class="recipe-card-actions">
-          <a href="/recipes/${recipe.id}/edit" class="btn-card">
-            Xem / sửa
-          </a>
-          <button class="btn-card btn-card-danger"
-                  data-action="delete"
-                  data-id="${recipe.id}">
-            Xóa
-          </button>
+          <a class="btn-card" href="/recipes/${recipe.id}/edit">✏️ Sửa</a>
+          <button class="btn-card btn-delete" type="button" data-id="${recipe.id}">🗑️ Xóa</button>
         </div>
       </div>
     </article>
@@ -171,56 +211,36 @@ function createUserCard(recipe, index) {
 // RENDER LIST
 // =======================
 
-function renderDefaultRecipes(searchTerm = "") {
+function renderDefaultRecipes() {
   if (!defaultListEl) return;
 
-  const q = searchTerm.trim().toLowerCase();
-  const filtered = defaultRecipes.filter((r) => {
-    if (!q) return true;
-    return (
-      (r.title || "").toLowerCase().includes(q) ||
-      (r.ingredients || "").toLowerCase().includes(q)
-    );
-  });
-
-  if (!filtered.length) {
+  if (!defaultRecipes || defaultRecipes.length === 0) {
     defaultListEl.innerHTML =
-      '<p class="empty-text">Không tìm thấy công thức gợi ý phù hợp.</p>';
+      '<p class="empty-text">Chưa có công thức gợi ý.</p>';
     return;
   }
 
-  defaultListEl.innerHTML = filtered
-    .map((recipe, index) => createDefaultCard(recipe, index))
+  defaultListEl.innerHTML = defaultRecipes
+    .map((r, i) => createDefaultCard(r, i))
     .join("");
 }
 
-function renderUserRecipes(searchTerm = "") {
+function renderUserRecipes(list) {
   if (!userListEl) return;
 
-  const q = searchTerm.trim().toLowerCase();
-  const filtered = userRecipes.filter((r) => {
-    if (!q) return true;
-    return (
-      (r.title || "").toLowerCase().includes(q) ||
-      (r.ingredients || "").toLowerCase().includes(q)
-    );
-  });
-
-  if (!filtered.length) {
-    userListEl.innerHTML =
-      '<p class="empty-text">Chưa có công thức phù hợp. Hãy thử từ khoá khác hoặc thêm món mới 👩‍🍳</p>';
+  if (!list || list.length === 0) {
+    userListEl.innerHTML = "";
     if (emptyUserText) emptyUserText.style.display = "block";
     return;
   }
 
-  userListEl.innerHTML = filtered
-    .map((recipe, index) => createUserCard(recipe, index))
-    .join("");
   if (emptyUserText) emptyUserText.style.display = "none";
+
+  userListEl.innerHTML = list.map((r, i) => createUserCard(r, i)).join("");
 }
 
 // =======================
-// FETCH DATA
+// LOAD DATA
 // =======================
 
 async function loadDefaultRecipes() {
@@ -233,74 +253,110 @@ async function loadDefaultRecipes() {
     // Router gợi ý: routes_default_recipes, path GET "/default-recipes"
     const res = await fetch("/default-recipes");
     if (!res.ok) throw new Error("Failed to load default recipes");
-    defaultRecipes = await res.json();
+
+    const data = await res.json();
+
+    // ✅ chỉ lấy đúng 3 công thức bất kỳ
+    defaultRecipes = Array.isArray(data) ? data.slice(0, 3) : [];
     renderDefaultRecipes();
   } catch (err) {
     console.error(err);
-    defaultListEl.innerHTML =
-      '<p class="empty-text">Không tải được công thức gợi ý.</p>';
+
+    // ✅ fallback 3 món minh họa (để luôn có dữ liệu)
+    defaultRecipes = [
+      {
+        title: "Ức gà áp chảo",
+        category: "healthy",
+        note: "25 phút, dễ",
+        ingredients: "ức gà; muối; tiêu; tỏi; dầu olive; chanh",
+        image: null,
+      },
+      {
+        title: "Canh bí đỏ",
+        category: "canh",
+        note: "20 phút, dễ",
+        ingredients: "bí đỏ; hành lá; thịt băm; nước mắm; tiêu",
+        image: null,
+      },
+      {
+        title: "Trứng chiên cà chua",
+        category: "chiên",
+        note: "15 phút, siêu nhanh",
+        ingredients: "trứng; cà chua; hành; nước mắm; đường",
+        image: null,
+      },
+    ];
+
+    renderDefaultRecipes();
   }
 }
 
 async function loadUserRecipes() {
-  if (!userListEl) return;
-
-  userListEl.innerHTML =
-    '<p class="loading-text">Đang tải công thức của bạn...</p>';
-
   try {
-    const res = await fetch("/api/recipes/");
-    if (!res.ok) throw new Error("Failed to load recipes");
+    // Router: routes_recipes, path GET "/api/recipes"
+    const res = await fetch("/api/recipes");
+    if (!res.ok) throw new Error("Failed to load user recipes");
+
     userRecipes = await res.json();
-    renderUserRecipes();
+    filteredUserRecipes = [...userRecipes];
+    renderUserRecipes(filteredUserRecipes);
   } catch (err) {
     console.error(err);
-    userListEl.innerHTML =
-      '<p class="empty-text">Không tải được công thức người dùng.</p>';
+    if (userListEl) {
+      userListEl.innerHTML =
+        '<p class="empty-text">Không tải được công thức của bạn.</p>';
+    }
   }
 }
 
 // =======================
-// TÌM KIẾM
+// SEARCH
 // =======================
 
 function applySearch() {
-  const term = (searchInput && searchInput.value) || "";
-  renderDefaultRecipes(term);
-  renderUserRecipes(term);
+  const q = (searchInput?.value || "").trim().toLowerCase();
+
+  if (!q) {
+    filteredUserRecipes = [...userRecipes];
+    renderUserRecipes(filteredUserRecipes);
+    return;
+  }
+
+  filteredUserRecipes = userRecipes.filter((r) =>
+    String(r.title || "").toLowerCase().includes(q)
+  );
+
+  renderUserRecipes(filteredUserRecipes);
 }
 
 // =======================
-// SỰ KIỆN SỬA / XOÁ
+// DELETE
 // =======================
 
 if (userListEl) {
   userListEl.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-action]");
+    const btn = e.target.closest(".btn-delete");
     if (!btn) return;
 
     const id = btn.dataset.id;
-    const action = btn.dataset.action;
-
     if (!id) return;
 
-    if (action === "delete") {
-      if (!confirm("Bạn có chắc muốn xóa công thức này?")) return;
-      try {
-        const res = await fetch(`/api/recipes/${id}`, {
-          method: "DELETE",
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          alert(data.detail || "Xóa thất bại.");
-          return;
-        }
-        await loadUserRecipes();
-        applySearch();
-      } catch (err) {
-        console.error(err);
-        alert("Có lỗi khi xóa công thức.");
-      }
+    const ok = confirm("Bạn chắc chắn muốn xóa công thức này?");
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+
+      userRecipes = userRecipes.filter((r) => String(r.id) !== String(id));
+      filteredUserRecipes = filteredUserRecipes.filter(
+        (r) => String(r.id) !== String(id)
+      );
+      renderUserRecipes(filteredUserRecipes);
+      alert("Đã xóa công thức.");
+    } catch (err) {
+      console.error(err);
+      alert("Có lỗi khi xóa công thức.");
     }
   });
 }
@@ -323,6 +379,28 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         applySearch();
       }
+    });
+  }
+
+  // ✅ Mua nguyên liệu cho 1 món gợi ý (nút trong card)
+  if (defaultListEl) {
+    defaultListEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action='buy-default']");
+      if (!btn) return;
+
+      const idx = Number(btn.dataset.index);
+      const recipe = defaultRecipes[idx];
+      if (!recipe) return;
+
+      savePrefillAndGoShop([recipe]);
+    });
+  }
+
+  // ✅ Mua nguyên liệu cho cả 3 món gợi ý (nút ở tiêu đề section)
+  const btnBuyAll = document.getElementById("btn-buy-default-ingredients");
+  if (btnBuyAll) {
+    btnBuyAll.addEventListener("click", () => {
+      savePrefillAndGoShop(defaultRecipes.slice(0, 3));
     });
   }
 });

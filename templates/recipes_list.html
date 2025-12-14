@@ -14,314 +14,230 @@ Planner{% endblock %} {% block content %}
     gap: 16px;
     padding: 14px 18px 18px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #eef2ff, #e0f2fe);
-    border: 1px solid #c7d2fe;
-    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.15);
-    margin-bottom: 18px;
+    background: linear-gradient(135deg, #ffffff, #f6fbff);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    margin-bottom: 14px;
   }
-
-  .hero-left {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  .recipes-hero h1 {
+    font-size: 22px;
+    margin: 0 0 6px;
+    letter-spacing: -0.2px;
   }
-
-  .page-title {
+  .recipes-hero p {
     margin: 0;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #111827;
+    color: rgba(15, 23, 42, 0.7);
+    font-size: 14px;
   }
-
-  .page-subtitle {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #4b5563;
-  }
-
   .hero-actions {
     display: flex;
-    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: none;
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
-    color: #fff;
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-decoration: none;
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s, opacity 0.1s;
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.5);
-    opacity: 0.95;
-  }
-
-  /* SEARCH BAR */
+  /* SEARCH */
   .recipes-search {
-    margin-bottom: 18px;
-  }
-
-  .search-bar {
+    margin: 10px 0 18px;
     display: flex;
-    gap: 8px;
-    background: #ffffff;
-    border-radius: 999px;
-    padding: 6px 8px 6px 12px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
-  }
-
-  .search-input {
-    flex: 1;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 0.9rem;
-  }
-
-  .btn-secondary {
-    border-radius: 999px;
-    border: 1px solid #cbd5e1;
-    background: #f9fafb;
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    color: #111827;
-    display: inline-flex;
+    gap: 10px;
     align-items: center;
-    gap: 4px;
-    transition: background 0.15s, box-shadow 0.1s;
+    flex-wrap: wrap;
   }
-
-  .btn-secondary:hover {
-    background: #e5e7eb;
-    box-shadow: 0 2px 6px rgba(148, 163, 184, 0.45);
+  .recipes-search form {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .recipes-search input {
+    flex: 1;
+    min-width: 220px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 10px 12px;
+    outline: none;
+    background: #fff;
+  }
+  .recipes-search input:focus {
+    border-color: rgba(59, 130, 246, 0.35);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
   }
 
   /* SECTIONS */
   .recipes-section {
-    margin-bottom: 26px;
+    margin-top: 16px;
   }
-
   .section-header {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-bottom: 10px;
-    text-align: center;
   }
-
   .section-header h2 {
+    font-size: 18px;
     margin: 0;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #111827;
   }
-
   .section-subtitle {
     margin: 0;
-    font-size: 0.8rem;
-    color: #6b7280;
+    color: rgba(15, 23, 42, 0.65);
+    font-size: 13px;
+    max-width: 760px;
   }
 
   /* GRID */
   .recipe-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
 
-  /* CARD CHUNG */
+  /* CARD */
   .recipe-card {
-    background: #ffffff;
     border-radius: 16px;
     overflow: hidden;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
     display: flex;
     flex-direction: column;
-    transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+    min-height: 320px;
   }
-
   .recipe-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
-    border-color: #bfdbfe;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.09);
   }
-
   .recipe-card-thumb {
     position: relative;
-    height: 150px;
-    overflow: hidden;
-    background: #f9fafb;
+    height: 140px;
+    background: #f3f4f6;
   }
-
   .recipe-card-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
-
   .badge {
     position: absolute;
     left: 10px;
     top: 10px;
-    padding: 3px 8px;
+    padding: 6px 10px;
     border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    backdrop-filter: blur(4px);
+    font-size: 12px;
+    color: #fff;
+    backdrop-filter: blur(6px);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
-
   .badge-default {
-    background: rgba(239, 246, 255, 0.9);
-    color: #4f46e5;
-    border: 1px solid rgba(191, 219, 254, 0.9);
+    background: rgba(59, 130, 246, 0.92);
   }
-
   .badge-user {
-    background: rgba(240, 253, 250, 0.9);
-    color: #059669;
-    border: 1px solid rgba(167, 243, 208, 0.9);
+    background: rgba(16, 185, 129, 0.92);
   }
-
   .recipe-card-body {
-    padding: 10px 14px 12px;
+    padding: 12px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
   }
-
   .recipe-card-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 4px;
-    color: #111827;
-  }
-
-  .recipe-card-meta {
-    font-size: 0.78rem;
-    color: #6b7280;
-    margin: 0 0 6px;
-  }
-
-  .recipe-card-note {
-    font-size: 0.8rem;
-    color: #4b5563;
-    margin: 0 0 6px;
-  }
-
-  .recipe-card-ingredients {
-    font-size: 0.78rem;
-    color: #6b7280;
     margin: 0;
+    font-size: 16px;
+    line-height: 1.25;
   }
-
-  .recipe-card-ingredients strong {
-    color: #111827;
+  .recipe-card-meta {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(15, 23, 42, 0.6);
   }
-
-  .recipe-tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    background: #eff6ff;
-    color: #1d4ed8;
+  .recipe-card-note {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: rgba(15, 23, 42, 0.75);
   }
-
-  /* CARD USER */
-  .recipe-card.user-card {
-    cursor: pointer;
+  .recipe-card-ingredients {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(15, 23, 42, 0.72);
   }
 
   .recipe-card-actions {
+    margin-top: auto;
     display: flex;
-    gap: 6px;
-    margin-top: 8px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .btn-card {
+    border: 1px solid rgba(0, 0, 0, 0.09);
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  }
+  .btn-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07);
   }
 
-  .btn-card {
+  /* BUTTONS (reuse your existing btn styles if any) */
+  .btn-primary,
+  .btn-secondary {
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    background: #fff;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 3px 9px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    border: 1px solid #cbd5e1;
-    background: #f9fafb;
-    color: #111827;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.15s, box-shadow 0.1s;
+    gap: 8px;
   }
-
-  .btn-card:hover {
-    background: #e5e7eb;
-    box-shadow: 0 2px 6px rgba(148, 163, 184, 0.6);
+  .btn-primary {
+    background: #2563eb;
+    color: #fff;
+    border-color: rgba(37, 99, 235, 0.65);
   }
-
-  .btn-card-danger {
-    border-color: #fecaca;
-    color: #b91c1c;
-    background: #fef2f2;
-  }
-
-  .btn-card-danger:hover {
-    background: #fee2e2;
+  .btn-secondary {
+    background: #fff;
+    color: rgba(15, 23, 42, 0.9);
   }
 
   .empty-text,
   .loading-text {
-    font-size: 0.85rem;
-    color: #6b7280;
-  }
-
-  @media (max-width: 768px) {
-    .recipes-hero {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .hero-actions {
-      width: 100%;
-      justify-content: flex-start;
-    }
+    margin: 10px 0 0;
+    color: rgba(15, 23, 42, 0.6);
+    font-size: 14px;
   }
 </style>
 
-<div class="page-recipes">
-  <!-- HERO / SEARCH -->
-  <section class="recipes-hero">
-    <div class="hero-left">
-      <h1 class="page-title">📚 Thư viện công thức</h1>
-      <p class="page-subtitle">
-        Tìm kiếm, tham khảo các món ăn gợi ý và lưu lại công thức của riêng bạn.
-      </p>
+<div class="page-recipes container">
+  <header class="recipes-hero">
+    <div>
+      <h1>📚 Thư viện công thức</h1>
+      <p>Quản lý công thức của bạn & tham khảo 3 công thức gợi ý từ hệ thống.</p>
     </div>
     <div class="hero-actions">
-      <a href="/recipes/new" class="btn-primary">
-        <i class="fa-solid fa-plus"></i>
-        Thêm công thức
+      <a class="btn-primary" href="/recipes/add">
+        <i class="fa-solid fa-plus"></i> Thêm công thức
       </a>
     </div>
-  </section>
+  </header>
 
   <section class="recipes-search">
-    <form id="recipe-search-form" class="search-bar" onsubmit="return false;">
+    <form onsubmit="return false;">
       <input
-        id="search-input"
         type="text"
-        class="search-input"
-        placeholder="Tìm món ăn hoặc nguyên liệu..."
+        id="search-input"
+        placeholder="Tìm theo tên công thức..."
       />
       <button type="button" id="btn-search" class="btn-secondary">
         <i class="fa-solid fa-magnifying-glass"></i>
@@ -333,12 +249,21 @@ Planner{% endblock %} {% block content %}
   <!-- 1. CÔNG THỨC GỢI Ý SẴN -->
   <section class="recipes-section">
     <div class="section-header">
-      <h2>🌟 Công thức gợi ý từ hệ thống</h2>
-      <p class="section-subtitle">
-        Một vài công thức có sẵn để bạn tham khảo nhanh. Các công thức này không
-        thể chỉnh sửa.
-      </p>
+      <div>
+        <h2>🌟 Công thức gợi ý từ hệ thống</h2>
+        <p class="section-subtitle">
+          Hệ thống hiển thị đúng 3 công thức bất kỳ. Bạn có thể bấm “Mua nguyên
+          liệu” để tự chuyển sang cửa hàng và thêm vào giỏ.
+        </p>
+
+        <div class="section-actions" style="margin-top: 10px">
+          <button type="button" id="btn-buy-default-ingredients" class="btn-secondary">
+            🛒 Mua nguyên liệu cho 3 món gợi ý
+          </button>
+        </div>
+      </div>
     </div>
+
     <div id="default-recipes-list" class="recipe-grid">
       <!-- JS sẽ render card gợi ý -->
     </div>
@@ -347,16 +272,22 @@ Planner{% endblock %} {% block content %}
   <!-- 2. CÔNG THỨC CỦA BẠN -->
   <section class="recipes-section">
     <div class="section-header">
-      <h2>🍳 Công thức của bạn</h2>
-      <p class="section-subtitle" id="user-recipes-empty" style="display: none">
-        Chưa có công thức nào. Hãy thêm một món mới nhé 👩‍🍳
+      <h2>👩‍🍳 Công thức của bạn</h2>
+      <p class="section-subtitle">
+        Bạn có thể sửa/xóa công thức do bạn tạo.
       </p>
     </div>
+
+    <p id="user-recipes-empty" class="empty-text" style="display: none;">
+      Bạn chưa có công thức nào. Hãy thêm một công thức nhé!
+    </p>
+
     <div id="user-recipes-list" class="recipe-grid">
-      <!-- JS sẽ render công thức user -->
+      <!-- JS sẽ render card user -->
     </div>
   </section>
 </div>
 
 <script src="/static/js/recipes_list.js"></script>
+
 {% endblock %}

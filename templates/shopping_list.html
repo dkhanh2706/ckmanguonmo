@@ -3,6 +3,206 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/shop.css" />
+
+<style>
+  /* ====== CART UI OVERRIDE (đẹp hơn) ====== */
+  .shop-cart{
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 18px 55px rgba(0,0,0,0.35);
+    backdrop-filter: blur(10px);
+    border-radius: 18px;
+    padding: 16px;
+  }
+  .shop-cart h3{
+    font-size: 20px;
+    margin: 6px 0 14px;
+    color: #fff;
+    letter-spacing: .2px;
+  }
+
+  .cart-items{
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cart-row{
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .cart-left{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .cart-name{
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cart-meta{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .qty-wrap{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .qty-btn{
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .08s ease;
+  }
+  .qty-btn:hover{ transform: translateY(-1px); }
+
+  .qty-num{
+    min-width: 16px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .cart-line-price{
+    color: rgba(255,255,255,0.92);
+    font-weight: 800;
+  }
+
+  .cart-right{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .cart-remove{
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .cart-footer{
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .cart-total{
+    color: rgba(255,255,255,0.92);
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .cart-total span{
+    color: #fff;
+    font-size: 18px;
+  }
+
+  .btn-checkout{
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 14px;
+    font-weight: 900;
+    cursor: pointer;
+    background: linear-gradient(90deg, #ff7a18, #ffb23f);
+    color: #111827;
+    box-shadow: 0 16px 40px rgba(255, 122, 24, 0.22);
+  }
+
+  .cart-note{
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.78);
+    line-height: 1.35;
+  }
+
+  .order-output-block{
+    margin-top: 14px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.06);
+  }
+  .order-output-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    color: #fff;
+    font-weight: 800;
+    background: rgba(0,0,0,0.18);
+  }
+  #btn-copy-order{
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.10);
+    color: #fff;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  #order-output{
+    width: 100%;
+    min-height: 160px;
+    padding: 12px;
+    border: none;
+    outline: none;
+    resize: vertical;
+    color: rgba(255,255,255,0.92);
+    background: transparent;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .empty-cart{
+    color: rgba(255,255,255,0.78);
+    margin: 8px 0;
+    font-size: 13px;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -11,9 +211,7 @@
     <header class="shop-header">
       <div>
         <h2>🛒 Cửa hàng nguyên liệu</h2>
-        <p>
-          Chọn nhanh nguyên liệu cho các công thức & lịch ăn uống của bạn.
-        </p>
+        <p>Chọn nhanh nguyên liệu cho các công thức & lịch ăn uống của bạn.</p>
       </div>
       <div class="shop-search">
         <input
@@ -21,15 +219,13 @@
           id="shop-search-input"
           placeholder="Tìm: gạo, ức gà, dầu olive..."
         />
-        <button id="shop-search-btn">
-          <i class="fas fa-search"></i>
+        <button id="shop-search-btn" type="button" class="btn-search">
+          🔎
         </button>
       </div>
     </header>
 
-    <div id="shop-products" class="shop-grid">
-      <!-- JS sẽ render card sản phẩm ở đây -->
-    </div>
+    <div id="shop-products" class="shop-products"></div>
   </section>
 
   <aside class="shop-cart" id="shop-cart">
@@ -39,30 +235,29 @@
 
     <div class="cart-footer">
       <div class="cart-total">
-        Tổng tạm tính: <span id="cart-total">0</span> đ
+        <span>Tổng tạm tính</span>
+        <span><span id="cart-total">0</span> đ</span>
       </div>
+
       <div class="cart-actions">
-        <button id="btn-checkout" class="btn-checkout">
-          Tạo đơn mua hàng
-        </button>
+        <button id="btn-checkout" class="btn-checkout">Mua ngay</button>
       </div>
+
       <p class="cart-note">
-        * Bấm "Tạo đơn mua hàng" để xuất nội dung & tổng tiền bên dưới. Các
-        món vẫn nằm trong giỏ, bạn có thể xóa từng món nếu không cần nữa.
+        * Khi bạn bấm “Mua nguyên liệu” bên trang Công thức, qua đây hệ thống sẽ tự thêm giỏ
+        và tự tạo sẵn nội dung đơn hàng. Bạn chỉ cần bấm “Mua ngay”.
       </p>
     </div>
 
     <div class="order-output-block">
       <div class="order-output-header">
         <span>📄 Nội dung đơn hàng</span>
-        <button id="btn-copy-order" type="button">
-          Sao chép
-        </button>
+        <button id="btn-copy-order" type="button">Sao chép</button>
       </div>
       <textarea
         id="order-output"
         readonly
-        placeholder="Chưa có đơn hàng nào. Hãy thêm sản phẩm và bấm 'Tạo đơn mua hàng'."
+        placeholder="Chưa có đơn hàng nào."
       ></textarea>
     </div>
   </aside>

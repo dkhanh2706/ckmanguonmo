@@ -12,6 +12,7 @@
   border-radius: 16px;
   padding: 18px 20px;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  overflow: hidden; /* ✅ tránh tràn nội dung */
 }
 
 .shop-header {
@@ -46,6 +47,12 @@
   border: 1px solid #d1d5db;
   min-width: 220px;
   font-size: 0.9rem;
+  outline: none;
+}
+
+.shop-search input:focus {
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
 .shop-search button {
@@ -57,12 +64,17 @@
   color: white;
 }
 
+/* ✅ grid đúng tên class bạn đang dùng trong HTML là shop-products
+   (giữ shop-grid để tương thích nếu bạn dùng chỗ khác) */
+.shop-products,
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
 
+/* ===== CARD ===== */
 .shop-card {
   background: white;
   border-radius: 14px;
@@ -70,20 +82,55 @@
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+
+  /* ✅ FIX TRÀN ẢNH */
+  overflow: hidden;
 }
 
+/* ✅ FIX ẢNH BỊ TRÀN / BỊ DÀI NHƯ BANNER */
 .shop-card img {
   border-radius: 12px;
   width: 100%;
-  height: 140px;
-  object-fit: cover;
+  max-width: 100%;
+  height: 160px;        /* 🔥 khóa chiều cao ảnh, không bị banner */
+  object-fit: cover;    /* 🔥 cắt ảnh vừa khung */
+  display: block;
+}
+
+/* Nếu trong HTML có .shop-card-body thì vẫn đẹp */
+.shop-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Nếu HTML có .shop-card-header, .shop-card-desc, .shop-card-footer */
+.shop-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .shop-card-title {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: #111827;
+  margin: 0;
+  line-height: 1.25;
+
+  /* ✅ không cho title làm tràn */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-card-desc {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+  line-height: 1.35;
 }
 
 .shop-card-badge {
@@ -95,18 +142,21 @@
   border-radius: 999px;
   background: #eff6ff;
   color: #1d4ed8;
+  white-space: nowrap;
 }
 
-.shop-card-bottom {
+.shop-card-bottom,
+.shop-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  gap: 10px;
 }
 
 .shop-card-price {
   color: #b91c1c;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .shop-card-unit {
@@ -114,16 +164,24 @@
   font-size: 0.8rem;
 }
 
-.shop-card button {
+/* ✅ nút thêm nhìn gọn hơn, không bị “đè to” */
+.shop-card button,
+.btn-add {
   margin-top: 6px;
   width: 100%;
   border-radius: 999px;
   border: none;
-  padding: 8px 10px;
+  padding: 10px 12px;
   cursor: pointer;
   background: #111827;
   color: white;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.shop-card button:hover,
+.btn-add:hover {
+  filter: brightness(1.05);
 }
 
 /* Sidebar giỏ hàng */
@@ -152,6 +210,7 @@
   font-size: 0.85rem;
 }
 
+/* (giữ tương thích: bạn có thể dùng cart-item cũ hoặc cart-row mới) */
 .cart-item {
   display: grid;
   grid-template-columns: 1fr auto auto;
@@ -183,6 +242,64 @@
   font-size: 0.85rem;
 }
 
+/* ✅ hỗ trợ layout cart-row mới (nếu dùng) */
+.cart-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.cart-name {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.cart-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qty-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.qty-num {
+  min-width: 18px;
+  text-align: center;
+  color: #fff;
+  font-weight: 800;
+}
+
+.cart-price {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 800;
+  text-align: right;
+}
+
+.cart-remove {
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
 .cart-footer {
   border-top: 1px solid rgba(148, 163, 184, 0.6);
   padding-top: 8px;
@@ -193,7 +310,7 @@
 }
 
 .cart-total {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .cart-actions {
@@ -205,11 +322,15 @@
   width: 100%;
   border-radius: 999px;
   border: none;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: #f97316;
   color: #111827;
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
+}
+
+.btn-checkout:hover {
+  filter: brightness(1.03);
 }
 
 .cart-note {
@@ -262,5 +383,18 @@
 @media (max-width: 900px) {
   .shop-layout {
     grid-template-columns: 1fr;
+  }
+
+  .shop-search input {
+    min-width: 160px;
+  }
+
+  .shop-products,
+  .shop-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-card img {
+    height: 180px; /* mobile nhìn đẹp hơn */
   }
 }
