@@ -8,6 +8,11 @@ import shutil
 import uuid
 import os
 
+# ✅ NEW: send mail
+import smtplib
+from email.message import EmailMessage
+from datetime import datetime
+
 router = APIRouter(prefix="/api/recipes", tags=["Recipes"])
 
 UPLOAD_DIR = "static/uploads"
@@ -25,6 +30,56 @@ def make_image_url(filename: str | None):
         return "/" + filename
     # nếu lưu filename trần (uuid_filename) thì map vào uploads
     return f"/static/uploads/{filename}"
+
+
+# ✅ NEW: send review email via Gmail SMTP
+def send_review_email(
+    *,
+    recipe_title: str,
+    recipe_id: int,
+    rating: int,
+    reviewer_name: str,
+    comment: str,
+):
+    # bật/tắt bằng env
+    if os.getenv("MAIL_ENABLED", "0") != "1":
+        return
+
+    host = os.getenv("MAIL_HOST", "smtp.gmail.com")
+    port = int(os.getenv("MAIL_PORT", "465"))
+    user = os.getenv("MAIL_USER", "")
+    password = os.getenv("MAIL_PASS", "")
+    mail_to = os.getenv("MAIL_TO", "")
+    mail_from = os.getenv("MAIL_FROM", user)
+
+    # thiếu config thì bỏ qua (không làm hỏng chức năng review)
+    if not (user and password and mail_to):
+        print("MAIL CONFIG MISSING: check MAIL_USER/MAIL_PASS/MAIL_TO in .env")
+        return
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    subject = f"[Yuki Meal Planner] Review mới: {recipe_title} ({rating}★)"
+    body = f"""Bạn vừa nhận được 1 đánh giá mới.
+
+Món: {recipe_title}
+Recipe ID: {recipe_id}
+Số sao: {rating}/5
+Người đánh giá: {reviewer_name}
+Nhận xét: {comment or "(không có)"}
+Thời gian: {now}
+"""
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = mail_from
+    msg["To"] = mail_to
+    msg.set_content(body)
+
+    # Gmail SSL 465
+    with smtplib.SMTP_SSL(host, port) as smtp:
+        smtp.login(user, password)
+        smtp.send_message(msg)
 
 
 # =========================================
@@ -236,7 +291,7 @@ def list_reviews(recipe_id: int, db: Session = Depends(get_db)):
 
 
 # =========================================
-# REVIEWS: CREATE
+# REVIEWS: CREATE (✅ gửi mail thật)
 # =========================================
 @router.post("/{recipe_id}/reviews")
 def create_review(
@@ -263,5 +318,17 @@ def create_review(
     db.add(rv)
     db.commit()
     db.refresh(rv)
+
+    # ✅ Gửi email (nếu lỗi mail vẫn trả OK cho user)
+    try:
+        send_review_email(
+            recipe_title=r.title,
+            recipe_id=recipe_id,
+            rating=rating,
+            reviewer_name=reviewer_name,
+            comment=comment,
+        )
+    except Exception as e:
+        print("MAIL ERROR:", e)
 
     return {"message": "Review created", "id": rv.id}

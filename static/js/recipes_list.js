@@ -4,19 +4,18 @@
 // CẤU HÌNH & STATE
 // =======================
 
-const DEFAULT_FALLBACK_IMG = "/static/img/default_recipe.jpg";
+// fallback chắc ăn (bạn đang có file này)
+const DEFAULT_FALLBACK_IMG = "/static/img/default_1.jpg";
 
+// dự phòng nếu img_n.jpg bị thiếu
 const DEFAULT_IMAGES = [
   "/static/img/default_1.jpg",
   "/static/img/default_2.jpg",
   "/static/img/default_3.jpg",
-  DEFAULT_FALLBACK_IMG,
 ];
 
 let defaultRecipes = [];
 let userRecipes = [];
-
-// Map title -> id trong DB (để gợi ý map sang DB khi cần)
 let dbTitleToId = new Map();
 
 const defaultListEl = document.getElementById("default-recipes-list");
@@ -36,14 +35,12 @@ const reviewCommentEl = document.getElementById("review-comment");
 const btnReviewCancel = document.getElementById("btn-review-cancel");
 const btnReviewSubmit = document.getElementById("btn-review-submit");
 
-// recipe đang đánh giá: {source, id, title, ingredients, steps, note, category, image}
 let currentReviewRecipe = null;
 let currentSelectedRating = 0;
 
 // =======================
-// HÀM TIỆN ÍCH
+// HELPERS
 // =======================
-
 function escapeHtml(str = "") {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -61,8 +58,18 @@ function truncate(text = "", maxLen = 80) {
 
 function pickDefaultImage(index = 0) {
   if (!DEFAULT_IMAGES.length) return DEFAULT_FALLBACK_IMG;
-  const i = index % DEFAULT_IMAGES.length;
+  const i = Math.abs(index) % DEFAULT_IMAGES.length;
   return DEFAULT_IMAGES[i] || DEFAULT_FALLBACK_IMG;
+}
+
+/**
+ * ✅ MỖI Ô = 1 ẢNH CỐ ĐỊNH THEO VỊ TRÍ (index)
+ * Ô 1 -> /static/img/img_1.jpg
+ * Ô 2 -> /static/img/img_2.jpg
+ * ...
+ */
+function getCardImageByIndex(index = 0) {
+  return `/static/img/img_${index + 1}.jpg`;
 }
 
 function buildImageUrl(image) {
@@ -82,9 +89,13 @@ function buildImageUrl(image) {
     path = "static/" + path;
   } else if (path.startsWith("default/")) {
     path = "static/" + path;
+  } else if (path.startsWith("img/")) {
+    path = "static/" + path;
   } else {
+    // mặc định legacy: uploads
     path = "static/uploads/" + path;
   }
+
   return "/" + path;
 }
 
@@ -102,9 +113,8 @@ function renderStars(avgRating = 0) {
 }
 
 // =======================
-// MODAL REVIEW: OPEN/CLOSE
+// MODAL REVIEW
 // =======================
-
 function setStarPicker(rating) {
   currentSelectedRating = Number(rating || 0);
   if (!starPicker) return;
@@ -141,11 +151,9 @@ if (starPicker) {
   starPicker.addEventListener("click", (e) => {
     const sp = e.target.closest("span[data-v]");
     if (!sp) return;
-    const v = Number(sp.dataset.v || 0);
-    setStarPicker(v);
+    setStarPicker(Number(sp.dataset.v || 0));
   });
 
-  // hover effect
   starPicker.addEventListener("mousemove", (e) => {
     const sp = e.target.closest("span[data-v]");
     if (!sp) return;
@@ -179,14 +187,12 @@ document.addEventListener("keydown", (e) => {
 });
 
 // =======================
-// TẠO HTML CARD
+// CARD HTML
 // =======================
-
 function createRatingRow(recipe, source) {
   const avg = safeNumber(recipe.avg_rating, 0);
   const count = safeNumber(recipe.review_count, 0);
 
-  // ⭐ thêm nút dinh dưỡng dưới nút đánh giá
   return `
     <div class="recipe-rating-row" style="align-items:flex-start;">
       <div>
@@ -215,7 +221,10 @@ function createRatingRow(recipe, source) {
 
 function createDefaultCard(recipe, index) {
   const baseImg = buildImageUrl(recipe.image);
-  const imgUrl = baseImg || pickDefaultImage(index);
+
+  // ✅ nếu không có ảnh -> dùng ảnh cố định img_1.jpg, img_2.jpg...
+  const fixedCardImg = getCardImageByIndex(index);
+  const imgUrl = baseImg || fixedCardImg;
 
   const title = escapeHtml(recipe.title || "Món ăn gợi ý");
   const category = escapeHtml(recipe.category || "Khác");
@@ -227,7 +236,7 @@ function createDefaultCard(recipe, index) {
       <div class="recipe-card-thumb">
         <img src="${imgUrl}" alt="${title}"
              loading="lazy"
-             onerror="this.src='${DEFAULT_FALLBACK_IMG}'" />
+             onerror="this.onerror=null; this.src='${pickDefaultImage(index)}';" />
         <span class="badge badge-default">Gợi ý</span>
       </div>
       <div class="recipe-card-body">
@@ -263,7 +272,7 @@ function createUserCard(recipe, index) {
       <div class="recipe-card-thumb">
         <img src="${imgUrl}" alt="${title}"
              loading="lazy"
-             onerror="this.src='${DEFAULT_FALLBACK_IMG}'" />
+             onerror="this.onerror=null; this.src='${pickDefaultImage(index)}';" />
         <span class="badge badge-user">Của bạn</span>
       </div>
       <div class="recipe-card-body">
@@ -298,9 +307,8 @@ function createUserCard(recipe, index) {
 }
 
 // =======================
-// RENDER LIST
+// RENDER
 // =======================
-
 function renderDefaultRecipes(searchTerm = "") {
   if (!defaultListEl) return;
 
@@ -350,9 +358,8 @@ function renderUserRecipes(searchTerm = "") {
 }
 
 // =======================
-// FETCH DATA
+// FETCH
 // =======================
-
 async function loadDefaultRecipes() {
   if (!defaultListEl) return;
 
@@ -400,9 +407,8 @@ async function loadUserRecipes() {
 }
 
 // =======================
-// TÌM KIẾM
+// SEARCH
 // =======================
-
 function applySearch() {
   const term = (searchInput && searchInput.value) || "";
   renderDefaultRecipes(term);
@@ -410,16 +416,14 @@ function applySearch() {
 }
 
 // =======================
-// REVIEW HELPERS (AUTO CREATE DB RECIPE FOR DEFAULT)
+// REVIEW HELPERS
 // =======================
-
 async function ensureRecipeExistsInDb(recipeObj) {
   if (recipeObj.source === "user") return Number(recipeObj.id);
 
   const key = String(recipeObj.title || "").trim().toLowerCase();
   if (key && dbTitleToId.has(key)) return dbTitleToId.get(key);
 
-  // tạo recipe mới trong DB từ default
   const fd = new FormData();
   fd.append("title", recipeObj.title || "Công thức gợi ý");
   fd.append("ingredients", recipeObj.ingredients || "");
@@ -436,7 +440,6 @@ async function ensureRecipeExistsInDb(recipeObj) {
 
   await loadUserRecipes();
   applySearch();
-
   return newId;
 }
 
@@ -449,7 +452,6 @@ async function fetchAndRefreshRecipeStats(recipeId) {
     const avg = safeNumber(data.avg_rating, 0);
     const cnt = safeNumber(data.review_count, 0);
 
-    // update userRecipes by id
     const uid = Number(recipeId);
     const uidx = userRecipes.findIndex((x) => Number(x.id) === uid);
     if (uidx >= 0) {
@@ -457,7 +459,6 @@ async function fetchAndRefreshRecipeStats(recipeId) {
       userRecipes[uidx].review_count = cnt;
     }
 
-    // update defaultRecipes by title (nếu backend trả title)
     const t = String(data.title || "").trim().toLowerCase();
     if (t) {
       defaultRecipes = defaultRecipes.map((r) => {
@@ -476,13 +477,12 @@ async function fetchAndRefreshRecipeStats(recipeId) {
 // =======================
 // CLICK HANDLER
 // =======================
-
 function handleListClick(e) {
   const btn = e.target.closest("button[data-action]");
   if (!btn) return;
 
   const action = btn.dataset.action;
-  const source = btn.dataset.source; // default | user
+  const source = btn.dataset.source;
   const id = btn.dataset.id;
 
   if (action === "delete") {
@@ -525,7 +525,6 @@ function handleListClick(e) {
     return;
   }
 
-  // ✅ NÚT DINH DƯỠNG
   if (action === "nutrition") {
     if (!id) return;
     window.location.href = `/nutrition?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`;
@@ -537,9 +536,8 @@ if (defaultListEl) defaultListEl.addEventListener("click", handleListClick);
 if (userListEl) userListEl.addEventListener("click", handleListClick);
 
 // =======================
-// SUBMIT REVIEW (FormData)
+// SUBMIT REVIEW
 // =======================
-
 async function submitReview() {
   if (!currentReviewRecipe) {
     alert("Thiếu recipe để đánh giá.");
@@ -596,9 +594,8 @@ async function submitReview() {
 if (btnReviewSubmit) btnReviewSubmit.addEventListener("click", submitReview);
 
 // =======================
-// KHỞI TẠO
+// INIT
 // =======================
-
 document.addEventListener("DOMContentLoaded", () => {
   loadDefaultRecipes();
   loadUserRecipes();
