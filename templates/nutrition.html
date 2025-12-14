@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Thông tin dinh dưỡng{% endblock %}
+{% block content %}
+
+<style>
+  .nutrition-box {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .nutrition-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .nutrition-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .nutrition-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  }
+
+  .nutrition-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .nutrition-table th,
+  .nutrition-table td {
+    padding: 8px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+  }
+
+  .nutrition-table th {
+    background: #f8fafc;
+  }
+
+  @media (max-width: 768px) {
+    .nutrition-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="nutrition-box">
+  <div class="nutrition-header">
+    <h2>🥗 Thông tin dinh dưỡng</h2>
+    <p id="recipe-name" class="text-muted"></p>
+  </div>
+
+  <div class="nutrition-grid">
+    <!-- Chart -->
+    <div class="nutrition-card">
+      <h3>📊 Sơ đồ dinh dưỡng</h3>
+      <canvas id="nutritionChart" height="200"></canvas>
+    </div>
+
+    <!-- Table -->
+    <div class="nutrition-card">
+      <h3>📋 Thành phần dinh dưỡng</h3>
+      <table class="nutrition-table">
+        <tr><th>Thành phần</th><th>Giá trị</th></tr>
+        <tr><td>Calories</td><td>450 kcal</td></tr>
+        <tr><td>Protein</td><td>22 g</td></tr>
+        <tr><td>Carbohydrate</td><td>55 g</td></tr>
+        <tr><td>Fat</td><td>18 g</td></tr>
+        <tr><td>Chất xơ</td><td>6 g</td></tr>
+        <tr><td>Muối</td><td>1.2 g</td></tr>
+      </table>
+      <p style="font-size:0.8rem;color:#6b7280;margin-top:6px">
+        * Số liệu mang tính minh họa
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ChartJS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/nutrition.js"></script>
+
+{% endblock %}

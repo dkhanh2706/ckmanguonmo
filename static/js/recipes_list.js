@@ -4,76 +4,41 @@
 // CẤU HÌNH & STATE
 // =======================
 
-// Ảnh fallback cuối cùng, chắc chắn tồn tại
 const DEFAULT_FALLBACK_IMG = "/static/img/default_recipe.jpg";
 
-// Danh sách ảnh mặc định xoay vòng cho các card
-// 👉 Bạn có thể tạo thêm file default_1.jpg, default_2.jpg, default_3.jpg …
 const DEFAULT_IMAGES = [
   "/static/img/default_1.jpg",
   "/static/img/default_2.jpg",
   "/static/img/default_3.jpg",
-  DEFAULT_FALLBACK_IMG, // luôn để 1 ảnh tồn tại cuối cùng
+  DEFAULT_FALLBACK_IMG,
 ];
 
-// =======================
-// MUA NGUYÊN LIỆU TỪ CÔNG THỨC GỢI Ý (3 MÓN)
-// =======================
-const PREFILL_KEY = "prefill_shop_from_recipes";
+let defaultRecipes = [];
+let userRecipes = [];
 
-// Tách nguyên liệu từ chuỗi (ưu tiên dấu ; theo hướng dẫn nhập liệu)
-function splitIngredients(raw = "") {
-  return String(raw)
-    .split(/;|,|\n/gi)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((s) => {
-      // loại bỏ số lượng/đơn vị đơn giản (mang tính minh họa)
-      return s
-        .replace(/\b\d+([.,]\d+)?\b/g, "")
-        .replace(
-          /\b(kg|g|gram|ml|l|muỗng|muong|thìa|thia|tsp|tbsp|cup|chén|chen)\b/gi,
-          ""
-        )
-        .replace(/\s+/g, " ")
-        .trim();
-    })
-    .filter(Boolean);
-}
+// Map title -> id trong DB (để gợi ý map sang DB)
+let dbTitleToId = new Map();
 
-function savePrefillAndGoShop(recipes = []) {
-  const titles = recipes.map((r) => r.title || "Món gợi ý").slice(0, 3);
-  const ingredients = recipes
-    .flatMap((r) => splitIngredients(r.ingredients || ""))
-    .map((x) => x.toLowerCase());
-
-  const uniq = Array.from(new Set(ingredients)).slice(0, 40);
-
-  localStorage.setItem(
-    PREFILL_KEY,
-    JSON.stringify({
-      titles,
-      ingredients: uniq,
-      ts: Date.now(),
-    })
-  );
-
-  // ✅ Nếu route shop của bạn khác, đổi lại URL này
-  window.location.href = "/shopping-list";
-}
-
-// Trạng thái dữ liệu
-let defaultRecipes = []; // 3 công thức gợi ý
-let userRecipes = []; // công thức của user
-let filteredUserRecipes = []; // sau khi search
-
-// DOM
 const defaultListEl = document.getElementById("default-recipes-list");
 const userListEl = document.getElementById("user-recipes-list");
 const emptyUserText = document.getElementById("user-recipes-empty");
 
 const searchInput = document.getElementById("search-input");
 const btnSearch = document.getElementById("btn-search");
+
+// =======================
+// REVIEW MODAL (DOM)
+// =======================
+const reviewModal = document.getElementById("review-modal");
+const starPicker = document.getElementById("star-picker");
+const reviewerNameEl = document.getElementById("reviewer-name");
+const reviewCommentEl = document.getElementById("review-comment");
+const btnReviewCancel = document.getElementById("btn-review-cancel");
+const btnReviewSubmit = document.getElementById("btn-review-submit");
+
+// Lưu recipe đang đánh giá (cả source + data)
+let currentReviewRecipe = null; // {source, id, title, ingredients, steps, note, category, image}
+let currentSelectedRating = 0;
 
 // =======================
 // HÀM TIỆN ÍCH
@@ -88,44 +53,149 @@ function escapeHtml(str = "") {
     .replace(/'/g, "&#039;");
 }
 
-// Rút gọn text (ví dụ cho nguyên liệu)
 function truncate(text = "", maxLen = 80) {
   const t = String(text || "").trim();
   if (t.length <= maxLen) return t;
   return t.slice(0, maxLen - 3) + "...";
 }
 
-// Chọn ảnh mặc định theo index (xoay vòng)
 function pickDefaultImage(index = 0) {
   if (!DEFAULT_IMAGES.length) return DEFAULT_FALLBACK_IMG;
-  const i = Math.abs(index) % DEFAULT_IMAGES.length;
+  const i = index % DEFAULT_IMAGES.length;
   return DEFAULT_IMAGES[i] || DEFAULT_FALLBACK_IMG;
 }
 
-// Build image URL (nếu backend trả path tương đối)
-function buildImageUrl(imagePath) {
-  if (!imagePath) return "";
-  // Nếu đã là URL tuyệt đối hoặc bắt đầu bằng /static thì giữ nguyên
-  if (
-    String(imagePath).startsWith("http://") ||
-    String(imagePath).startsWith("https://") ||
-    String(imagePath).startsWith("/static/")
-  ) {
-    return imagePath;
+function buildImageUrl(image) {
+  if (!image) return null;
+  let path = String(image).trim();
+  if (!path) return null;
+
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) return path;
+
+  if (path.startsWith("/")) path = path.slice(1);
+  if (path.startsWith("app/")) path = path.slice(4);
+
+  if (path.startsWith("static/")) {
+    // ok
+  } else if (path.startsWith("uploads/")) {
+    path = "static/" + path;
+  } else {
+    path = "static/uploads/" + path;
   }
-  // Nếu backend trả dạng "uploads/xxx.jpg" thì ghép thành "/static/uploads/xxx.jpg"
-  if (String(imagePath).startsWith("uploads/")) {
-    return "/static/" + imagePath;
-  }
-  // Còn lại: trả về nguyên gốc
-  return imagePath;
+  return "/" + path;
+}
+
+function safeNumber(n, fallback = 0) {
+  const x = Number(n);
+  return Number.isFinite(x) ? x : fallback;
+}
+
+function renderStars(avgRating = 0) {
+  const r = Number(avgRating || 0);
+  const full = Math.max(0, Math.min(5, Math.round(r)));
+  let s = "";
+  for (let i = 1; i <= 5; i++) s += i <= full ? "★" : "☆";
+  return s;
 }
 
 // =======================
-// RENDER CARD
+// MODAL REVIEW: OPEN/CLOSE
 // =======================
 
-// Card cho công thức gợi ý
+function setStarPicker(rating) {
+  currentSelectedRating = Number(rating || 0);
+  if (!starPicker) return;
+
+  const stars = Array.from(starPicker.querySelectorAll("span[data-v]"));
+  stars.forEach((sp) => {
+    const v = Number(sp.dataset.v || 0);
+    if (v <= currentSelectedRating) sp.classList.add("active");
+    else sp.classList.remove("active");
+  });
+}
+
+function openReviewModal(recipeObj) {
+  if (!reviewModal) return;
+
+  currentReviewRecipe = recipeObj; // lưu cả source + data
+  setStarPicker(0);
+
+  if (reviewerNameEl) reviewerNameEl.value = "";
+  if (reviewCommentEl) reviewCommentEl.value = "";
+
+  reviewModal.classList.add("show");
+}
+
+function closeReviewModal() {
+  if (!reviewModal) return;
+
+  reviewModal.classList.remove("show");
+  currentReviewRecipe = null;
+  currentSelectedRating = 0;
+}
+
+if (starPicker) {
+  starPicker.addEventListener("click", (e) => {
+    const sp = e.target.closest("span[data-v]");
+    if (!sp) return;
+    const v = Number(sp.dataset.v || 0);
+    setStarPicker(v);
+  });
+
+  starPicker.addEventListener("mousemove", (e) => {
+    const sp = e.target.closest("span[data-v]");
+    if (!sp) return;
+    const hoverV = Number(sp.dataset.v || 0);
+
+    const stars = Array.from(starPicker.querySelectorAll("span[data-v]"));
+    stars.forEach((x) => {
+      const v = Number(x.dataset.v || 0);
+      if (v <= hoverV) x.classList.add("active");
+      else x.classList.remove("active");
+    });
+  });
+
+  starPicker.addEventListener("mouseleave", () => {
+    setStarPicker(currentSelectedRating);
+  });
+}
+
+if (btnReviewCancel) btnReviewCancel.addEventListener("click", closeReviewModal);
+
+if (reviewModal) {
+  reviewModal.addEventListener("click", (e) => {
+    if (e.target === reviewModal) closeReviewModal();
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && reviewModal && reviewModal.classList.contains("show")) {
+    closeReviewModal();
+  }
+});
+
+// =======================
+// TẠO HTML CARD
+// =======================
+
+function createRatingRow(recipe, source) {
+  const avg = safeNumber(recipe.avg_rating, 0);
+  const count = safeNumber(recipe.review_count, 0);
+
+  return `
+    <div class="recipe-rating-row">
+      <span class="stars" title="Điểm trung bình: ${avg.toFixed(2)}">${renderStars(avg)}</span>
+      <span class="rating-count">(${count})</span>
+      <button type="button" class="btn-review"
+              data-action="review"
+              data-source="${source}"
+              data-id="${recipe.id}">
+        Đánh giá
+      </button>
+    </div>
+  `;
+}
+
 function createDefaultCard(recipe, index) {
   const baseImg = buildImageUrl(recipe.image);
   const imgUrl = baseImg || pickDefaultImage(index);
@@ -146,8 +216,10 @@ function createDefaultCard(recipe, index) {
       <div class="recipe-card-body">
         <h3 class="recipe-card-title">${title}</h3>
         <p class="recipe-card-meta">${category}</p>
-        ${note ? `<p class="recipe-card-note">${note}</p>` : ""}
 
+        ${createRatingRow(recipe, "default")}
+
+        ${note ? `<p class="recipe-card-note">${note}</p>` : ""}
         ${
           ingredientsShort
             ? `<p class="recipe-card-ingredients"><strong>Nguyên liệu chính:</strong> ${escapeHtml(
@@ -155,18 +227,11 @@ function createDefaultCard(recipe, index) {
               )}</p>`
             : ""
         }
-
-        <div class="recipe-card-actions">
-          <button class="btn-card" type="button" data-action="buy-default" data-index="${index}">
-            🛒 Mua nguyên liệu
-          </button>
-        </div>
       </div>
     </article>
   `;
 }
 
-// Card cho công thức của user
 function createUserCard(recipe, index) {
   const baseImg = buildImageUrl(recipe.image);
   const imgUrl = baseImg || pickDefaultImage(index);
@@ -177,19 +242,20 @@ function createUserCard(recipe, index) {
   const ingredientsShort = truncate(recipe.ingredients || "", 80);
 
   return `
-    <article class="recipe-card user-card" data-id="${recipe.id}">
+    <article class="recipe-card user-card">
       <div class="recipe-card-thumb">
         <img src="${imgUrl}" alt="${title}"
              loading="lazy"
              onerror="this.src='${DEFAULT_FALLBACK_IMG}'" />
         <span class="badge badge-user">Của bạn</span>
       </div>
-
       <div class="recipe-card-body">
         <h3 class="recipe-card-title">${title}</h3>
         <p class="recipe-card-meta">${category}</p>
-        ${note ? `<p class="recipe-card-note">${note}</p>` : ""}
 
+        ${createRatingRow(recipe, "user")}
+
+        ${note ? `<p class="recipe-card-note">${note}</p>` : ""}
         ${
           ingredientsShort
             ? `<p class="recipe-card-ingredients"><strong>Nguyên liệu:</strong> ${escapeHtml(
@@ -199,8 +265,15 @@ function createUserCard(recipe, index) {
         }
 
         <div class="recipe-card-actions">
-          <a class="btn-card" href="/recipes/${recipe.id}/edit">✏️ Sửa</a>
-          <button class="btn-card btn-delete" type="button" data-id="${recipe.id}">🗑️ Xóa</button>
+          <a href="/recipes/${recipe.id}/edit" class="btn-card">
+            Xem / sửa
+          </a>
+          <button class="btn-card btn-card-danger"
+                  data-action="delete"
+                  data-source="user"
+                  data-id="${recipe.id}">
+            Xóa
+          </button>
         </div>
       </div>
     </article>
@@ -211,36 +284,56 @@ function createUserCard(recipe, index) {
 // RENDER LIST
 // =======================
 
-function renderDefaultRecipes() {
+function renderDefaultRecipes(searchTerm = "") {
   if (!defaultListEl) return;
 
-  if (!defaultRecipes || defaultRecipes.length === 0) {
+  const q = searchTerm.trim().toLowerCase();
+  const filtered = defaultRecipes.filter((r) => {
+    if (!q) return true;
+    return (
+      (r.title || "").toLowerCase().includes(q) ||
+      (r.ingredients || "").toLowerCase().includes(q)
+    );
+  });
+
+  if (!filtered.length) {
     defaultListEl.innerHTML =
-      '<p class="empty-text">Chưa có công thức gợi ý.</p>';
+      '<p class="empty-text">Không tìm thấy công thức gợi ý phù hợp.</p>';
     return;
   }
 
-  defaultListEl.innerHTML = defaultRecipes
-    .map((r, i) => createDefaultCard(r, i))
+  defaultListEl.innerHTML = filtered
+    .map((recipe, index) => createDefaultCard(recipe, index))
     .join("");
 }
 
-function renderUserRecipes(list) {
+function renderUserRecipes(searchTerm = "") {
   if (!userListEl) return;
 
-  if (!list || list.length === 0) {
-    userListEl.innerHTML = "";
+  const q = searchTerm.trim().toLowerCase();
+  const filtered = userRecipes.filter((r) => {
+    if (!q) return true;
+    return (
+      (r.title || "").toLowerCase().includes(q) ||
+      (r.ingredients || "").toLowerCase().includes(q)
+    );
+  });
+
+  if (!filtered.length) {
+    userListEl.innerHTML =
+      '<p class="empty-text">Chưa có công thức phù hợp. Hãy thử từ khoá khác hoặc thêm món mới 👩‍🍳</p>';
     if (emptyUserText) emptyUserText.style.display = "block";
     return;
   }
 
+  userListEl.innerHTML = filtered
+    .map((recipe, index) => createUserCard(recipe, index))
+    .join("");
   if (emptyUserText) emptyUserText.style.display = "none";
-
-  userListEl.innerHTML = list.map((r, i) => createUserCard(r, i)).join("");
 }
 
 // =======================
-// LOAD DATA
+// FETCH DATA
 // =======================
 
 async function loadDefaultRecipes() {
@@ -250,116 +343,252 @@ async function loadDefaultRecipes() {
     '<p class="loading-text">Đang tải công thức gợi ý...</p>';
 
   try {
-    // Router gợi ý: routes_default_recipes, path GET "/default-recipes"
-    const res = await fetch("/default-recipes");
+    const res = await fetch("/default-recipes/");
     if (!res.ok) throw new Error("Failed to load default recipes");
-
-    const data = await res.json();
-
-    // ✅ chỉ lấy đúng 3 công thức bất kỳ
-    defaultRecipes = Array.isArray(data) ? data.slice(0, 3) : [];
+    defaultRecipes = await res.json();
     renderDefaultRecipes();
   } catch (err) {
     console.error(err);
-
-    // ✅ fallback 3 món minh họa (để luôn có dữ liệu)
-    defaultRecipes = [
-      {
-        title: "Ức gà áp chảo",
-        category: "healthy",
-        note: "25 phút, dễ",
-        ingredients: "ức gà; muối; tiêu; tỏi; dầu olive; chanh",
-        image: null,
-      },
-      {
-        title: "Canh bí đỏ",
-        category: "canh",
-        note: "20 phút, dễ",
-        ingredients: "bí đỏ; hành lá; thịt băm; nước mắm; tiêu",
-        image: null,
-      },
-      {
-        title: "Trứng chiên cà chua",
-        category: "chiên",
-        note: "15 phút, siêu nhanh",
-        ingredients: "trứng; cà chua; hành; nước mắm; đường",
-        image: null,
-      },
-    ];
-
-    renderDefaultRecipes();
+    defaultListEl.innerHTML =
+      '<p class="empty-text">Không tải được công thức gợi ý.</p>';
   }
+}
+
+function rebuildDbTitleMap() {
+  dbTitleToId = new Map();
+  userRecipes.forEach((r) => {
+    const t = String(r.title || "").trim().toLowerCase();
+    if (t) dbTitleToId.set(t, Number(r.id));
+  });
 }
 
 async function loadUserRecipes() {
-  try {
-    // Router: routes_recipes, path GET "/api/recipes"
-    const res = await fetch("/api/recipes");
-    if (!res.ok) throw new Error("Failed to load user recipes");
+  if (!userListEl) return;
 
+  userListEl.innerHTML =
+    '<p class="loading-text">Đang tải công thức của bạn...</p>';
+
+  try {
+    const res = await fetch("/api/recipes/");
+    if (!res.ok) throw new Error("Failed to load recipes");
     userRecipes = await res.json();
-    filteredUserRecipes = [...userRecipes];
-    renderUserRecipes(filteredUserRecipes);
+
+    // build map title->id để gợi ý map sang DB
+    rebuildDbTitleMap();
+
+    renderUserRecipes();
   } catch (err) {
     console.error(err);
-    if (userListEl) {
-      userListEl.innerHTML =
-        '<p class="empty-text">Không tải được công thức của bạn.</p>';
-    }
+    userListEl.innerHTML =
+      '<p class="empty-text">Không tải được công thức người dùng.</p>';
   }
 }
 
 // =======================
-// SEARCH
+// TÌM KIẾM
 // =======================
 
 function applySearch() {
-  const q = (searchInput?.value || "").trim().toLowerCase();
+  const term = (searchInput && searchInput.value) || "";
+  renderDefaultRecipes(term);
+  renderUserRecipes(term);
+}
 
-  if (!q) {
-    filteredUserRecipes = [...userRecipes];
-    renderUserRecipes(filteredUserRecipes);
+// =======================
+// REVIEW HELPERS (AUTO CREATE DB RECIPE FOR DEFAULT)
+// =======================
+
+async function ensureRecipeExistsInDb(recipeObj) {
+  // Nếu là recipe user -> chắc chắn có trong DB, dùng luôn id
+  if (recipeObj.source === "user") return Number(recipeObj.id);
+
+  // Nếu là default: thử map theo title trước
+  const key = String(recipeObj.title || "").trim().toLowerCase();
+  if (key && dbTitleToId.has(key)) {
+    return dbTitleToId.get(key);
+  }
+
+  // Chưa có trong DB -> tạo mới
+  const fd = new FormData();
+  fd.append("title", recipeObj.title || "Công thức gợi ý");
+  fd.append("ingredients", recipeObj.ingredients || "");
+  fd.append("steps", recipeObj.steps || "");
+  fd.append("note", recipeObj.note || "");
+  fd.append("category", recipeObj.category || "");
+
+  const res = await fetch("/api/recipes/", {
+    method: "POST",
+    body: fd,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Không tạo được recipe vào DB");
+  }
+
+  const newId = Number(data.id);
+  if (key && Number.isFinite(newId)) dbTitleToId.set(key, newId);
+
+  // reload userRecipes để UI đồng bộ (tuỳ bạn)
+  await loadUserRecipes();
+  applySearch();
+
+  return newId;
+}
+
+async function fetchAndRefreshRecipeStats(recipeId) {
+  try {
+    const res = await fetch(`/api/recipes/${recipeId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+
+    // update stats in arrays by matching id in DB for userRecipes,
+    // và matching title for defaultRecipes
+    const avg = safeNumber(data.avg_rating, 0);
+    const cnt = safeNumber(data.review_count, 0);
+
+    // update userRecipes by id
+    const uid = Number(recipeId);
+    const uidx = userRecipes.findIndex((x) => Number(x.id) === uid);
+    if (uidx >= 0) {
+      userRecipes[uidx].avg_rating = avg;
+      userRecipes[uidx].review_count = cnt;
+    }
+
+    // update defaultRecipes by title map
+    const t = String(data.title || "").trim().toLowerCase();
+    if (t) {
+      defaultRecipes = defaultRecipes.map((r) => {
+        const rt = String(r.title || "").trim().toLowerCase();
+        if (rt === t) {
+          return { ...r, avg_rating: avg, review_count: cnt };
+        }
+        return r;
+      });
+    }
+
+    applySearch();
+  } catch (e) {
+    console.warn("Không refresh được stats:", e);
+  }
+}
+
+// =======================
+// SỰ KIỆN CLICK: delete / review
+// =======================
+
+function handleListClick(e) {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+
+  const action = btn.dataset.action;
+  const source = btn.dataset.source; // default | user
+  const id = btn.dataset.id;
+
+  if (action === "delete") {
+    if (!id) return;
+
+    (async () => {
+      if (!confirm("Bạn có chắc muốn xóa công thức này?")) return;
+      try {
+        const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          alert(data.detail || "Xóa thất bại.");
+          return;
+        }
+        await loadUserRecipes();
+        applySearch();
+      } catch (err) {
+        console.error(err);
+        alert("Có lỗi khi xóa công thức.");
+      }
+    })();
     return;
   }
 
-  filteredUserRecipes = userRecipes.filter((r) =>
-    String(r.title || "").toLowerCase().includes(q)
-  );
-
-  renderUserRecipes(filteredUserRecipes);
-}
-
-// =======================
-// DELETE
-// =======================
-
-if (userListEl) {
-  userListEl.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".btn-delete");
-    if (!btn) return;
-
-    const id = btn.dataset.id;
+  if (action === "review") {
     if (!id) return;
 
-    const ok = confirm("Bạn chắc chắn muốn xóa công thức này?");
-    if (!ok) return;
-
-    try {
-      const res = await fetch(`/api/recipes/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
-
-      userRecipes = userRecipes.filter((r) => String(r.id) !== String(id));
-      filteredUserRecipes = filteredUserRecipes.filter(
-        (r) => String(r.id) !== String(id)
-      );
-      renderUserRecipes(filteredUserRecipes);
-      alert("Đã xóa công thức.");
-    } catch (err) {
-      console.error(err);
-      alert("Có lỗi khi xóa công thức.");
+    let recipeObj = null;
+    if (source === "default") {
+      recipeObj = defaultRecipes.find((r) => String(r.id) === String(id));
+      if (!recipeObj) return;
+      recipeObj = { ...recipeObj, source: "default" };
+    } else {
+      recipeObj = userRecipes.find((r) => String(r.id) === String(id));
+      if (!recipeObj) return;
+      recipeObj = { ...recipeObj, source: "user" };
     }
-  });
+
+    openReviewModal(recipeObj);
+    return;
+  }
 }
+
+if (defaultListEl) defaultListEl.addEventListener("click", handleListClick);
+if (userListEl) userListEl.addEventListener("click", handleListClick);
+
+// =======================
+// SUBMIT REVIEW (FormData)
+// =======================
+
+async function submitReview() {
+  if (!currentReviewRecipe) {
+    alert("Thiếu recipe để đánh giá.");
+    return;
+  }
+
+  const rating = Number(currentSelectedRating || 0);
+  if (rating < 1 || rating > 5) {
+    alert("Vui lòng chọn số sao (1–5).");
+    return;
+  }
+
+  const reviewerName = reviewerNameEl ? String(reviewerNameEl.value || "").trim() : "";
+  const comment = reviewCommentEl ? String(reviewCommentEl.value || "").trim() : "";
+
+  if (btnReviewSubmit) {
+    btnReviewSubmit.disabled = true;
+    btnReviewSubmit.textContent = "Đang gửi...";
+  }
+
+  try {
+    // ✅ quan trọng: đảm bảo recipe tồn tại trong DB
+    const dbRecipeId = await ensureRecipeExistsInDb(currentReviewRecipe);
+
+    const fd = new FormData();
+    fd.append("rating", String(rating));
+    fd.append("reviewer_name", reviewerName || "Ẩn danh");
+    fd.append("comment", comment);
+
+    const res = await fetch(`/api/recipes/${dbRecipeId}/reviews`, {
+      method: "POST",
+      body: fd,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data.detail || "Gửi đánh giá thất bại.");
+      return;
+    }
+
+    closeReviewModal();
+    alert("✅ Đã gửi đánh giá thành công!");
+
+    await fetchAndRefreshRecipeStats(dbRecipeId);
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Lỗi khi gửi đánh giá.");
+  } finally {
+    if (btnReviewSubmit) {
+      btnReviewSubmit.disabled = false;
+      btnReviewSubmit.textContent = "Gửi";
+    }
+  }
+}
+
+if (btnReviewSubmit) btnReviewSubmit.addEventListener("click", submitReview);
 
 // =======================
 // KHỞI TẠO
@@ -369,9 +598,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadDefaultRecipes();
   loadUserRecipes();
 
-  if (btnSearch) {
-    btnSearch.addEventListener("click", applySearch);
-  }
+  if (btnSearch) btnSearch.addEventListener("click", applySearch);
 
   if (searchInput) {
     searchInput.addEventListener("keydown", (e) => {
@@ -379,28 +606,6 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         applySearch();
       }
-    });
-  }
-
-  // ✅ Mua nguyên liệu cho 1 món gợi ý (nút trong card)
-  if (defaultListEl) {
-    defaultListEl.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-action='buy-default']");
-      if (!btn) return;
-
-      const idx = Number(btn.dataset.index);
-      const recipe = defaultRecipes[idx];
-      if (!recipe) return;
-
-      savePrefillAndGoShop([recipe]);
-    });
-  }
-
-  // ✅ Mua nguyên liệu cho cả 3 món gợi ý (nút ở tiêu đề section)
-  const btnBuyAll = document.getElementById("btn-buy-default-ingredients");
-  if (btnBuyAll) {
-    btnBuyAll.addEventListener("click", () => {
-      savePrefillAndGoShop(defaultRecipes.slice(0, 3));
     });
   }
 });

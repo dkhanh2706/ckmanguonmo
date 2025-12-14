@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.database import get_db
 from app import models
 
@@ -7,18 +8,22 @@ import shutil
 import uuid
 import os
 
-# API PREFIX
 router = APIRouter(prefix="/api/recipes", tags=["Recipes"])
 
-# Thư mục lưu file trên server
 UPLOAD_DIR = "static/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-# Tạo URL hiển thị ảnh cho front-end
 def make_image_url(filename: str | None):
     if not filename:
         return None
+    # nếu lưu "/static/..." thì giữ nguyên
+    if filename.startswith("/static/"):
+        return filename
+    # nếu lưu "static/..." thì thêm /
+    if filename.startswith("static/"):
+        return "/" + filename
+    # nếu lưu filename trần (uuid_filename) thì map vào uploads
     return f"/static/uploads/{filename}"
 
 
@@ -35,14 +40,11 @@ def create_recipe(
     image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-
     saved_filename = None
 
-    # Lưu file ảnh nếu có upload
     if image:
         saved_filename = f"{uuid.uuid4().hex}_{image.filename}"
         file_path = os.path.join(UPLOAD_DIR, saved_filename)
-
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
 
@@ -52,49 +54,62 @@ def create_recipe(
         steps=steps,
         note=note,
         category=category,
-        image=saved_filename,       # LƯU TÊN FILE, KHÔNG LƯU ĐƯỜNG DẪN
+        image=saved_filename,
     )
 
     db.add(recipe)
     db.commit()
     db.refresh(recipe)
 
-    return {
-        "message": "Created",
-        "data": {
-            "id": recipe.id,
-            "title": recipe.title,
-            "image": make_image_url(recipe.image)
-        }
-    }
+    return {"message": "Created", "id": recipe.id}
 
 
 # =========================================
-# READ ALL
+# READ ALL (kèm avg_rating + review_count)
 # =========================================
 @router.get("/")
 def list_recipes(db: Session = Depends(get_db), category: str | None = None):
-
-    query = db.query(models.Recipe)
-
+    q = db.query(models.Recipe)
     if category:
-        query = query.filter(models.Recipe.category == category)
+        q = q.filter(models.Recipe.category == category)
 
-    recipes = query.all()
+    recipes = q.all()
+    ids = [r.id for r in recipes]
 
-    # Convert image → URL
+    stats = {}
+    if ids:
+        rows = (
+            db.query(
+                models.RecipeReview.recipe_id.label("recipe_id"),
+                func.avg(models.RecipeReview.rating).label("avg_rating"),
+                func.count(models.RecipeReview.id).label("review_count"),
+            )
+            .filter(models.RecipeReview.recipe_id.in_(ids))
+            .group_by(models.RecipeReview.recipe_id)
+            .all()
+        )
+        for row in rows:
+            stats[int(row.recipe_id)] = {
+                "avg_rating": float(row.avg_rating or 0),
+                "review_count": int(row.review_count or 0),
+            }
+
     result = []
     for r in recipes:
-        result.append({
-            "id": r.id,
-            "title": r.title,
-            "ingredients": r.ingredients,
-            "steps": r.steps,
-            "note": r.note,
-            "category": r.category,
-            "image": make_image_url(r.image)
-        })
-
+        st = stats.get(r.id, {"avg_rating": 0.0, "review_count": 0})
+        result.append(
+            {
+                "id": r.id,
+                "title": r.title,
+                "ingredients": r.ingredients,
+                "steps": r.steps,
+                "note": r.note,
+                "category": r.category,
+                "image": make_image_url(r.image),
+                "avg_rating": round(float(st["avg_rating"]), 2),
+                "review_count": int(st["review_count"]),
+            }
+        )
     return result
 
 
@@ -105,7 +120,16 @@ def list_recipes(db: Session = Depends(get_db), category: str | None = None):
 def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
     r = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
     if not r:
-        return {"message": "Not found"}
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    st = (
+        db.query(
+            func.avg(models.RecipeReview.rating).label("avg_rating"),
+            func.count(models.RecipeReview.id).label("review_count"),
+        )
+        .filter(models.RecipeReview.recipe_id == recipe_id)
+        .first()
+    )
 
     return {
         "id": r.id,
@@ -115,6 +139,8 @@ def get_recipe(recipe_id: int, db: Session = Depends(get_db)):
         "note": r.note,
         "category": r.category,
         "image": make_image_url(r.image),
+        "avg_rating": round(float(st.avg_rating or 0), 2),
+        "review_count": int(st.review_count or 0),
     }
 
 
@@ -132,10 +158,9 @@ def update_recipe(
     image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-
     recipe = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
     if not recipe:
-        return {"message": "Not found"}
+        raise HTTPException(status_code=404, detail="Recipe not found")
 
     recipe.title = title
     recipe.ingredients = ingredients
@@ -143,19 +168,14 @@ def update_recipe(
     recipe.note = note
     recipe.category = category
 
-    # Cập nhật ảnh nếu có file mới
     if image:
         new_filename = f"{uuid.uuid4().hex}_{image.filename}"
         file_path = os.path.join(UPLOAD_DIR, new_filename)
-
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-
         recipe.image = new_filename
 
     db.commit()
-    db.refresh(recipe)
-
     return {"message": "Updated", "image": make_image_url(recipe.image)}
 
 
@@ -166,8 +186,82 @@ def update_recipe(
 def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
     recipe = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
     if not recipe:
-        return {"message": "Not found"}
+        raise HTTPException(status_code=404, detail="Recipe not found")
 
     db.delete(recipe)
     db.commit()
     return {"message": "Deleted"}
+
+
+# =========================================
+# REVIEWS: LIST
+# =========================================
+@router.get("/{recipe_id}/reviews")
+def list_reviews(recipe_id: int, db: Session = Depends(get_db)):
+    r = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    reviews = (
+        db.query(models.RecipeReview)
+        .filter(models.RecipeReview.recipe_id == recipe_id)
+        .order_by(models.RecipeReview.created_at.desc())
+        .all()
+    )
+
+    st = (
+        db.query(
+            func.avg(models.RecipeReview.rating).label("avg_rating"),
+            func.count(models.RecipeReview.id).label("review_count"),
+        )
+        .filter(models.RecipeReview.recipe_id == recipe_id)
+        .first()
+    )
+
+    return {
+        "recipe_id": recipe_id,
+        "avg_rating": round(float(st.avg_rating or 0), 2),
+        "review_count": int(st.review_count or 0),
+        "reviews": [
+            {
+                "id": rv.id,
+                "reviewer_name": rv.reviewer_name or "Ẩn danh",
+                "rating": rv.rating,
+                "comment": rv.comment or "",
+                "created_at": rv.created_at.isoformat() if rv.created_at else None,
+            }
+            for rv in reviews
+        ],
+    }
+
+
+# =========================================
+# REVIEWS: CREATE
+# =========================================
+@router.post("/{recipe_id}/reviews")
+def create_review(
+    recipe_id: int,
+    rating: int = Form(...),
+    comment: str = Form(""),
+    reviewer_name: str = Form("Ẩn danh"),
+    db: Session = Depends(get_db),
+):
+    if rating < 1 or rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be 1..5")
+
+    r = db.query(models.Recipe).filter(models.Recipe.id == recipe_id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    rv = models.RecipeReview(
+        recipe_id=recipe_id,
+        rating=rating,
+        comment=comment,
+        reviewer_name=reviewer_name,
+    )
+
+    db.add(rv)
+    db.commit()
+    db.refresh(rv)
+
+    return {"message": "Review created", "id": rv.id}

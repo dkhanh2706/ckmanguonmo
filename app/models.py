@@ -23,6 +23,24 @@ class Recipe(Base):
     note = Column(String(255), nullable=True)
     category = Column(String(100), nullable=True)
 
+    # ✅ thêm liên kết review
+    reviews = relationship("RecipeReview", back_populates="recipe", cascade="all, delete-orphan")
+
+
+# ✅ BẢNG ĐÁNH GIÁ CÔNG THỨC
+class RecipeReview(Base):
+    __tablename__ = "recipe_reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    reviewer_name = Column(String(120), nullable=True)
+    rating = Column(Integer, nullable=False)  # 1..5
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    recipe = relationship("Recipe", back_populates="reviews")
+
 
 # ✅ KHỚP 100% với DB hiện tại của bạn
 class MealSlot(Base):

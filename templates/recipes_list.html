@@ -1,293 +1,204 @@
-{% extends "base.html" %} {% block title %}Thư viện công thức – Yuki Meal
-Planner{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Thư viện công thức – Yuki Meal Planner{% endblock %}
+{% block content %}
 
 <style>
-  .page-recipes {
-    padding: 8px 0 40px;
-  }
+/* =========================
+   FIX ẢNH BỊ PHÌNH / TRÀN
+   ========================= */
+.recipe-card {
+  overflow: hidden;
+  border-radius: 18px;
+}
 
-  /* HERO */
-  .recipes-hero {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 18px 18px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #ffffff, #f6fbff);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-    margin-bottom: 14px;
-  }
-  .recipes-hero h1 {
-    font-size: 22px;
-    margin: 0 0 6px;
-    letter-spacing: -0.2px;
-  }
-  .recipes-hero p {
-    margin: 0;
-    color: rgba(15, 23, 42, 0.7);
-    font-size: 14px;
-  }
-  .hero-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
+.recipe-card-thumb {
+  height: 220px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #f3f4f6;
+}
 
-  /* SEARCH */
-  .recipes-search {
-    margin: 10px 0 18px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .recipes-search form {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-    flex-wrap: wrap;
-  }
-  .recipes-search input {
-    flex: 1;
-    min-width: 220px;
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    padding: 10px 12px;
-    outline: none;
-    background: #fff;
-  }
-  .recipes-search input:focus {
-    border-color: rgba(59, 130, 246, 0.35);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-  }
+.recipe-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
-  /* SECTIONS */
-  .recipes-section {
-    margin-top: 16px;
-  }
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .section-header h2 {
-    font-size: 18px;
-    margin: 0;
-  }
-  .section-subtitle {
-    margin: 0;
-    color: rgba(15, 23, 42, 0.65);
-    font-size: 13px;
-    max-width: 760px;
-  }
+/* =========================
+   RATING
+   ========================= */
+.recipe-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 0.85rem;
+}
 
-  /* GRID */
-  .recipe-grid {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  }
+.stars {
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
 
-  /* CARD */
-  .recipe-card {
-    border-radius: 16px;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-    display: flex;
-    flex-direction: column;
-    min-height: 320px;
-  }
-  .recipe-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.09);
-  }
-  .recipe-card-thumb {
-    position: relative;
-    height: 140px;
-    background: #f3f4f6;
-  }
-  .recipe-card-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .badge {
-    position: absolute;
-    left: 10px;
-    top: 10px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    color: #fff;
-    backdrop-filter: blur(6px);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .badge-default {
-    background: rgba(59, 130, 246, 0.92);
-  }
-  .badge-user {
-    background: rgba(16, 185, 129, 0.92);
-  }
-  .recipe-card-body {
-    padding: 12px 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
-  }
-  .recipe-card-title {
-    margin: 0;
-    font-size: 16px;
-    line-height: 1.25;
-  }
-  .recipe-card-meta {
-    margin: 0;
-    font-size: 13px;
-    color: rgba(15, 23, 42, 0.6);
-  }
-  .recipe-card-note {
-    margin: 2px 0 0;
-    font-size: 13px;
-    color: rgba(15, 23, 42, 0.75);
-  }
-  .recipe-card-ingredients {
-    margin: 4px 0 0;
-    font-size: 13px;
-    color: rgba(15, 23, 42, 0.72);
-  }
+.rating-count {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
 
-  .recipe-card-actions {
-    margin-top: auto;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .btn-card {
-    border: 1px solid rgba(0, 0, 0, 0.09);
-    background: #fff;
-    border-radius: 12px;
-    padding: 8px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: transform 0.08s ease, box-shadow 0.08s ease;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
-  }
-  .btn-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07);
-  }
+.btn-review {
+  margin-left: auto;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
 
-  /* BUTTONS (reuse your existing btn styles if any) */
-  .btn-primary,
-  .btn-secondary {
-    border-radius: 12px;
-    padding: 10px 12px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    cursor: pointer;
-    background: #fff;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .btn-primary {
-    background: #2563eb;
-    color: #fff;
-    border-color: rgba(37, 99, 235, 0.65);
-  }
-  .btn-secondary {
-    background: #fff;
-    color: rgba(15, 23, 42, 0.9);
-  }
+.btn-review:hover {
+  background: #e5e7eb;
+}
 
-  .empty-text,
-  .loading-text {
-    margin: 10px 0 0;
-    color: rgba(15, 23, 42, 0.6);
-    font-size: 14px;
-  }
+/* =========================
+   MODAL ĐÁNH GIÁ
+   ========================= */
+.review-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.review-modal.show {
+  display: flex;
+}
+
+.review-box {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.review-box h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.star-picker {
+  display: flex;
+  gap: 8px;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: #d1d5db;
+  user-select: none;
+}
+
+.star-picker span.active {
+  color: #f59e0b;
+}
+
+.review-box input,
+.review-box textarea {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
 </style>
 
-<div class="page-recipes container">
-  <header class="recipes-hero">
-    <div>
-      <h1>📚 Thư viện công thức</h1>
-      <p>Quản lý công thức của bạn & tham khảo 3 công thức gợi ý từ hệ thống.</p>
+<div class="page-recipes">
+
+  <!-- HEADER -->
+  <section class="recipes-hero">
+    <div class="hero-left">
+      <h1 class="page-title">📚 Thư viện công thức</h1>
+      <p class="page-subtitle">
+        Khám phá các công thức nấu ăn gợi ý và công thức của riêng bạn.
+      </p>
     </div>
     <div class="hero-actions">
-      <a class="btn-primary" href="/recipes/add">
-        <i class="fa-solid fa-plus"></i> Thêm công thức
+      <a href="/recipes/new" class="btn-primary">
+        ➕ Thêm công thức
       </a>
     </div>
-  </header>
+  </section>
 
+  <!-- SEARCH -->
   <section class="recipes-search">
-    <form onsubmit="return false;">
+    <form class="search-bar" onsubmit="return false;">
       <input
-        type="text"
         id="search-input"
-        placeholder="Tìm theo tên công thức..."
+        type="text"
+        class="search-input"
+        placeholder="Tìm món ăn hoặc nguyên liệu..."
       />
       <button type="button" id="btn-search" class="btn-secondary">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        Tìm kiếm
+        🔍 Tìm
       </button>
     </form>
   </section>
 
-  <!-- 1. CÔNG THỨC GỢI Ý SẴN -->
+  <!-- DEFAULT RECIPES -->
   <section class="recipes-section">
     <div class="section-header">
-      <div>
-        <h2>🌟 Công thức gợi ý từ hệ thống</h2>
-        <p class="section-subtitle">
-          Hệ thống hiển thị đúng 3 công thức bất kỳ. Bạn có thể bấm “Mua nguyên
-          liệu” để tự chuyển sang cửa hàng và thêm vào giỏ.
-        </p>
-
-        <div class="section-actions" style="margin-top: 10px">
-          <button type="button" id="btn-buy-default-ingredients" class="btn-secondary">
-            🛒 Mua nguyên liệu cho 3 món gợi ý
-          </button>
-        </div>
-      </div>
+      <h2>🌟 Công thức gợi ý từ hệ thống</h2>
     </div>
-
-    <div id="default-recipes-list" class="recipe-grid">
-      <!-- JS sẽ render card gợi ý -->
-    </div>
+    <div id="default-recipes-list" class="recipe-grid"></div>
   </section>
 
-  <!-- 2. CÔNG THỨC CỦA BẠN -->
+  <!-- USER RECIPES -->
   <section class="recipes-section">
     <div class="section-header">
-      <h2>👩‍🍳 Công thức của bạn</h2>
-      <p class="section-subtitle">
-        Bạn có thể sửa/xóa công thức do bạn tạo.
+      <h2>🍳 Công thức của bạn</h2>
+      <p id="user-recipes-empty" class="section-subtitle" style="display:none">
+        Bạn chưa có công thức nào.
       </p>
     </div>
-
-    <p id="user-recipes-empty" class="empty-text" style="display: none;">
-      Bạn chưa có công thức nào. Hãy thêm một công thức nhé!
-    </p>
-
-    <div id="user-recipes-list" class="recipe-grid">
-      <!-- JS sẽ render card user -->
-    </div>
+    <div id="user-recipes-list" class="recipe-grid"></div>
   </section>
+
 </div>
 
-<script src="/static/js/recipes_list.js"></script>
+<!-- MODAL ĐÁNH GIÁ -->
+<div id="review-modal" class="review-modal">
+  <div class="review-box">
+    <h3>Đánh giá công thức</h3>
+
+    <div id="star-picker" class="star-picker">
+      <span data-v="1">★</span>
+      <span data-v="2">★</span>
+      <span data-v="3">★</span>
+      <span data-v="4">★</span>
+      <span data-v="5">★</span>
+    </div>
+
+    <input id="reviewer-name" placeholder="Tên của bạn (tuỳ chọn)" />
+    <textarea id="review-comment" rows="3" placeholder="Nhận xét..."></textarea>
+
+    <div class="review-actions">
+      <button type="button" class="btn-secondary" id="btn-review-cancel">Hủy</button>
+      <button type="button" class="btn-primary" id="btn-review-submit">Gửi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ⚠️ BUST CACHE -->
+<script src="/static/js/recipes_list.js?v=1003"></script>
 
 {% endblock %}
