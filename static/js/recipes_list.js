@@ -147,7 +147,15 @@ const KW_MEAT = [
   "hải sản",
 ];
 const KW_EGG = ["trứng"];
-const KW_DAIRY = ["sữa", "phô mai", "bơ", "kem", "sữa chua", "whipping", "milk"];
+const KW_DAIRY = [
+  "sữa",
+  "phô mai",
+  "bơ",
+  "kem",
+  "sữa chua",
+  "whipping",
+  "milk",
+];
 const KW_GLUTEN = ["bột mì", "mì", "bánh mì", "pasta", "noodle", "gluten"];
 const KW_NUT = ["đậu phộng", "lạc", "hạt điều", "hạnh nhân", "óc chó", "nut"];
 const KW_PORK = ["heo", "lợn", "thịt heo", "thịt lợn", "bacon"];
@@ -165,7 +173,7 @@ function includesAny(text, keywords) {
  * - dairy_free: không sữa
  * - gluten_free: không gluten
  * - nut_free: không hạt
- * - halal: demo: không heo + không rượu (rất đơn giản, minh hoạ thôi)
+ * - halal: demo: không heo + không rượu (minh hoạ)
  */
 function inferDietTags(recipe) {
   const title = recipe?.title || "";
@@ -314,7 +322,8 @@ if (starPicker) {
   });
 }
 
-if (btnReviewCancel) btnReviewCancel.addEventListener("click", closeReviewModal);
+if (btnReviewCancel)
+  btnReviewCancel.addEventListener("click", closeReviewModal);
 
 if (reviewModal) {
   reviewModal.addEventListener("click", (e) => {
@@ -323,7 +332,11 @@ if (reviewModal) {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && reviewModal && reviewModal.classList.contains("show"))
+  if (
+    e.key === "Escape" &&
+    reviewModal &&
+    reviewModal.classList.contains("show")
+  )
     closeReviewModal();
 });
 
@@ -379,7 +392,9 @@ function createDefaultCard(recipe, index) {
       <div class="recipe-card-thumb">
         <img src="${imgUrl}" alt="${title}"
              loading="lazy"
-             onerror="this.onerror=null; this.src='${pickDefaultImage(index)}';" />
+             onerror="this.onerror=null; this.src='${pickDefaultImage(
+               index
+             )}';" />
         <span class="badge badge-default">Gợi ý</span>
       </div>
       <div class="recipe-card-body">
@@ -415,7 +430,9 @@ function createUserCard(recipe, index) {
       <div class="recipe-card-thumb">
         <img src="${imgUrl}" alt="${title}"
              loading="lazy"
-             onerror="this.onerror=null; this.src='${pickDefaultImage(index)}';" />
+             onerror="this.onerror=null; this.src='${pickDefaultImage(
+               index
+             )}';" />
         <span class="badge badge-user">Của bạn</span>
       </div>
       <div class="recipe-card-body">
@@ -453,14 +470,20 @@ function createUserCard(recipe, index) {
 // RENDER (áp dụng search + dietary)
 // =======================
 function filterBySearchAndDiet(list, searchTerm) {
-  const q = String(searchTerm || "").trim().toLowerCase();
+  const q = String(searchTerm || "")
+    .trim()
+    .toLowerCase();
 
   return (list || []).filter((r) => {
     // search
     const okSearch =
       !q ||
-      String(r.title || "").toLowerCase().includes(q) ||
-      String(r.ingredients || "").toLowerCase().includes(q);
+      String(r.title || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(r.ingredients || "")
+        .toLowerCase()
+        .includes(q);
 
     if (!okSearch) return false;
 
@@ -530,7 +553,9 @@ async function loadDefaultRecipes() {
 function rebuildDbTitleMap() {
   dbTitleToId = new Map();
   userRecipes.forEach((r) => {
-    const t = String(r.title || "").trim().toLowerCase();
+    const t = String(r.title || "")
+      .trim()
+      .toLowerCase();
     if (t) dbTitleToId.set(t, Number(r.id));
   });
 }
@@ -572,7 +597,9 @@ function applySearch() {
 async function ensureRecipeExistsInDb(recipeObj) {
   if (recipeObj.source === "user") return Number(recipeObj.id);
 
-  const key = String(recipeObj.title || "").trim().toLowerCase();
+  const key = String(recipeObj.title || "")
+    .trim()
+    .toLowerCase();
   if (key && dbTitleToId.has(key)) return dbTitleToId.get(key);
 
   const fd = new FormData();
@@ -610,10 +637,14 @@ async function fetchAndRefreshRecipeStats(recipeId) {
       userRecipes[uidx].review_count = cnt;
     }
 
-    const t = String(data.title || "").trim().toLowerCase();
+    const t = String(data.title || "")
+      .trim()
+      .toLowerCase();
     if (t) {
       defaultRecipes = defaultRecipes.map((r) => {
-        const rt = String(r.title || "").trim().toLowerCase();
+        const rt = String(r.title || "")
+          .trim()
+          .toLowerCase();
         if (rt === t) return { ...r, avg_rating: avg, review_count: cnt };
         return r;
       });
@@ -704,12 +735,15 @@ function handleListClick(e) {
       note: r.note || "",
       // demo nutrition để trang nutrition tính tổng nhiều món
       nutrition: makeMockNutrition(r),
-      // demo dietary tags (nếu bạn muốn show icon ở nutrition)
+      // demo dietary tags
       diet: r.diet || inferDietTags(r),
     };
 
     try {
-      sessionStorage.setItem("nutrition:selectedRecipe", JSON.stringify(payload));
+      sessionStorage.setItem(
+        "nutrition:selectedRecipe",
+        JSON.stringify(payload)
+      );
     } catch (e) {
       // ignore
     }
@@ -739,8 +773,12 @@ async function submitReview() {
     return;
   }
 
-  const reviewerName = reviewerNameEl ? String(reviewerNameEl.value || "").trim() : "";
-  const comment = reviewCommentEl ? String(reviewCommentEl.value || "").trim() : "";
+  const reviewerName = reviewerNameEl
+    ? String(reviewerNameEl.value || "").trim()
+    : "";
+  const comment = reviewCommentEl
+    ? String(reviewCommentEl.value || "").trim()
+    : "";
 
   if (btnReviewSubmit) {
     btnReviewSubmit.disabled = true;
@@ -802,15 +840,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // diet events
   if (dietWrap) {
-    const dietInputs = Array.from(document.querySelectorAll('input[name="diet"]'));
+    const dietInputs = Array.from(
+      document.querySelectorAll('input[name="diet"]')
+    );
     dietInputs.forEach((ip) => ip.addEventListener("change", applySearch));
   }
 
   if (btnClearDiet) {
     btnClearDiet.addEventListener("click", () => {
-      Array.from(document.querySelectorAll('input[name="diet"]')).forEach((ip) => {
-        ip.checked = false;
-      });
+      Array.from(document.querySelectorAll('input[name="diet"]')).forEach(
+        (ip) => {
+          ip.checked = false;
+        }
+      );
       applySearch();
     });
   }

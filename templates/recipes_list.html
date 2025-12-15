@@ -1,129 +1,177 @@
-{% extends "base.html" %}
-{% block title %}Thư viện công thức – Yuki Meal Planner{% endblock %}
-{% block content %}
+{% extends "base.html" %} {% block title %}Thư viện công thức – Yuki Meal
+Planner{% endblock %} {% block content %}
 
 <style>
-/* =========================
+  /* =========================
    FIX ẢNH BỊ PHÌNH / TRÀN
    ========================= */
-.recipe-card {
-  overflow: hidden;
-  border-radius: 18px;
-}
+  .recipe-card {
+    overflow: hidden;
+    border-radius: 18px;
+  }
 
-.recipe-card-thumb {
-  height: 220px;
-  overflow: hidden;
-  border-radius: 18px;
-  background: #f3f4f6;
-}
+  .recipe-card-thumb {
+    height: 220px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #f3f4f6;
+    position: relative;
+  }
 
-.recipe-card-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
+  .recipe-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 
-/* =========================
+  /* badge */
+  .badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+  }
+  .badge-default {
+    background: rgba(59, 130, 246, 0.9);
+  }
+  .badge-user {
+    background: rgba(16, 185, 129, 0.9);
+  }
+
+  /* =========================
    RATING
    ========================= */
-.recipe-rating-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 8px 0;
-  font-size: 0.85rem;
-}
+  .recipe-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    font-size: 0.85rem;
+  }
 
-.stars {
-  color: #f59e0b;
-  letter-spacing: 1px;
-}
+  .stars {
+    color: #f59e0b;
+    letter-spacing: 1px;
+  }
 
-.rating-count {
-  color: #6b7280;
-  font-size: 0.8rem;
-}
+  .rating-count {
+    color: #6b7280;
+    font-size: 0.8rem;
+  }
 
-.btn-review {
-  margin-left: auto;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
+  .btn-review {
+    margin-left: auto;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
 
-.btn-review:hover {
-  background: #e5e7eb;
-}
+  .btn-review:hover {
+    background: #e5e7eb;
+  }
 
-/* =========================
+  /* =========================
    MODAL ĐÁNH GIÁ
    ========================= */
-.review-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
+  .review-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
 
-.review-modal.show {
-  display: flex;
-}
+  .review-modal.show {
+    display: flex;
+  }
 
-.review-box {
-  width: 100%;
-  max-width: 420px;
-  background: #fff;
-  border-radius: 18px;
-  padding: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-}
+  .review-box {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  }
 
-.review-box h3 {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
-}
+  .review-box h3 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+  }
 
-.star-picker {
-  display: flex;
-  gap: 8px;
-  font-size: 1.6rem;
-  cursor: pointer;
-  color: #d1d5db;
-  user-select: none;
-}
+  .star-picker {
+    display: flex;
+    gap: 8px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: #d1d5db;
+    user-select: none;
+  }
 
-.star-picker span.active {
-  color: #f59e0b;
-}
+  .star-picker span.active {
+    color: #f59e0b;
+  }
 
-.review-box input,
-.review-box textarea {
-  width: 100%;
-  margin-top: 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 0.9rem;
-}
+  .review-box input,
+  .review-box textarea {
+    width: 100%;
+    margin-top: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
 
-.review-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 10px;
-}
+  .review-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  /* =========================
+   DIETARY FILTER (NEW)
+   ========================= */
+  .diet-filter {
+    margin: 14px 0 18px;
+  }
+  .diet-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    align-items: center;
+    background: #f8fafc;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    font-size: 0.9rem;
+  }
+  .diet-box strong {
+    margin-right: 6px;
+  }
+  .diet-box label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .diet-box input[type="checkbox"] {
+    transform: translateY(0.5px);
+  }
 </style>
 
 <div class="page-recipes">
-
   <!-- HEADER -->
   <section class="recipes-hero">
     <div class="hero-left">
@@ -133,9 +181,7 @@
       </p>
     </div>
     <div class="hero-actions">
-      <a href="/recipes/new" class="btn-primary">
-        ➕ Thêm công thức
-      </a>
+      <a href="/recipes/new" class="btn-primary"> ➕ Thêm công thức </a>
     </div>
   </section>
 
@@ -154,6 +200,47 @@
     </form>
   </section>
 
+  <!-- ✅ DIETARY RESTRICTIONS FILTER (NEW) -->
+  <section class="diet-filter">
+    <div id="diet-filter-wrap" class="diet-box">
+      <strong>🥗 Dietary restrictions</strong>
+
+      <label>
+        <input type="checkbox" name="diet" value="vegetarian" />
+        🥬 Chay (Vegetarian)
+      </label>
+
+      <label>
+        <input type="checkbox" name="diet" value="vegan" />
+        🌱 Thuần chay (Vegan)
+      </label>
+
+      <label>
+        <input type="checkbox" name="diet" value="gluten_free" />
+        🚫🌾 Không gluten
+      </label>
+
+      <label>
+        <input type="checkbox" name="diet" value="dairy_free" />
+        🥛❌ Không sữa
+      </label>
+
+      <label>
+        <input type="checkbox" name="diet" value="nut_free" />
+        🥜❌ Không hạt
+      </label>
+
+      <label>
+        <input type="checkbox" name="diet" value="halal" />
+        ☪️ Halal
+      </label>
+
+      <button type="button" id="btn-clear-diet" class="btn-secondary">
+        Xóa lọc (<span id="diet-filter-count">0</span>)
+      </button>
+    </div>
+  </section>
+
   <!-- DEFAULT RECIPES -->
   <section class="recipes-section">
     <div class="section-header">
@@ -166,13 +253,12 @@
   <section class="recipes-section">
     <div class="section-header">
       <h2>🍳 Công thức của bạn</h2>
-      <p id="user-recipes-empty" class="section-subtitle" style="display:none">
+      <p id="user-recipes-empty" class="section-subtitle" style="display: none">
         Bạn chưa có công thức nào.
       </p>
     </div>
     <div id="user-recipes-list" class="recipe-grid"></div>
   </section>
-
 </div>
 
 <!-- MODAL ĐÁNH GIÁ -->
@@ -192,13 +278,17 @@
     <textarea id="review-comment" rows="3" placeholder="Nhận xét..."></textarea>
 
     <div class="review-actions">
-      <button type="button" class="btn-secondary" id="btn-review-cancel">Hủy</button>
-      <button type="button" class="btn-primary" id="btn-review-submit">Gửi</button>
+      <button type="button" class="btn-secondary" id="btn-review-cancel">
+        Hủy
+      </button>
+      <button type="button" class="btn-primary" id="btn-review-submit">
+        Gửi
+      </button>
     </div>
   </div>
 </div>
 
 <!-- ⚠️ BUST CACHE -->
-<script src="/static/js/recipes_list.js?v=1004"></script>
+<script src="/static/js/recipes_list.js?v=2001"></script>
 
 {% endblock %}
