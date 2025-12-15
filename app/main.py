@@ -9,8 +9,8 @@ from fastapi.templating import Jinja2Templates
 # =========================
 # LOAD .env (RẤT QUAN TRỌNG)
 # =========================
-# File này nằm ở: CKMANGUONMO/app/main.py
-# .env nằm ở: CKMANGUONMO/.env
+# File: CKMANGUONMO/app/main.py
+# .env : CKMANGUONMO/.env
 ROOT_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT_DIR / ".env")
 
@@ -18,7 +18,7 @@ load_dotenv(ROOT_DIR / ".env")
 # DB + Models
 # =========================
 from .database import Base, engine  # noqa: E402
-from . import models  # noqa: F401, E402  (import để đăng ký models)
+from . import models  # noqa: F401, E402
 
 # =========================
 # Routers
@@ -109,7 +109,7 @@ def page_order_history(request: Request):
     return templates.TemplateResponse("order_history.html", {"request": request})
 
 
-# ✅ TRANG DINH DƯỠNG (bấm nút dinh dưỡng từ recipes_list.js qua đây)
+# ✅ TRANG DINH DƯỠNG
 @app.get("/nutrition", response_class=HTMLResponse)
 def page_nutrition(request: Request):
     return templates.TemplateResponse("nutrition.html", {"request": request})
@@ -125,7 +125,22 @@ def page_recipe_add(request: Request):
     return templates.TemplateResponse("recipe_add.html", {"request": request})
 
 
+# =========================
+# ✅ EDIT RECIPE - HỖ TRỢ CẢ 2 LINK
+# 1) /recipes/edit/{id}  (route cũ)
+# 2) /recipes/{id}/edit  (cách 2 - link frontend hay dùng)
+# =========================
+
+# 1) GIỮ ROUTE CŨ (khỏi gãy chỗ nào đang gọi)
 @app.get("/recipes/edit/{recipe_id}", response_class=HTMLResponse)
+def page_recipe_edit_old(request: Request, recipe_id: int):
+    return templates.TemplateResponse(
+        "recipe_edit.html",
+        {"request": request, "recipe_id": recipe_id},
+    )
+
+# 2) ✅ ROUTE MỚI (CÁCH 2)
+@app.get("/recipes/{recipe_id}/edit", response_class=HTMLResponse)
 def page_recipe_edit(request: Request, recipe_id: int):
     return templates.TemplateResponse(
         "recipe_edit.html",
