@@ -26,6 +26,13 @@ const searchInput = document.getElementById("search-input");
 const btnSearch = document.getElementById("btn-search");
 
 // =======================
+// DIET FILTER (DOM)
+// =======================
+const dietWrap = document.getElementById("diet-filter-wrap");
+const dietCountEl = document.getElementById("diet-filter-count");
+const btnClearDiet = document.getElementById("btn-clear-diet");
+
+// =======================
 // REVIEW MODAL (DOM)
 // =======================
 const reviewModal = document.getElementById("review-modal");
@@ -113,6 +120,141 @@ function renderStars(avgRating = 0) {
 }
 
 // =======================
+// DIETARY RESTRICTIONS (DEMO LOGIC)
+// =======================
+function normText(s = "") {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// demo từ khóa: đủ dùng cho bài nộp
+const KW_MEAT = [
+  "thịt",
+  "heo",
+  "lợn",
+  "bò",
+  "gà",
+  "vịt",
+  "cừu",
+  "xúc xích",
+  "giăm bông",
+  "chả",
+  "cá",
+  "tôm",
+  "mực",
+  "hải sản",
+];
+const KW_EGG = ["trứng"];
+const KW_DAIRY = ["sữa", "phô mai", "bơ", "kem", "sữa chua", "whipping", "milk"];
+const KW_GLUTEN = ["bột mì", "mì", "bánh mì", "pasta", "noodle", "gluten"];
+const KW_NUT = ["đậu phộng", "lạc", "hạt điều", "hạnh nhân", "óc chó", "nut"];
+const KW_PORK = ["heo", "lợn", "thịt heo", "thịt lợn", "bacon"];
+const KW_ALCOHOL = ["rượu", "bia", "wine", "vodka", "rum"];
+
+function includesAny(text, keywords) {
+  const t = normText(text);
+  return keywords.some((k) => t.includes(normText(k)));
+}
+
+/**
+ * Trả về tags "đạt điều kiện" (true/false) theo kiểu demo
+ * - vegan: không thịt/cá/trứng/sữa
+ * - vegetarian: không thịt/cá (cho phép trứng/sữa)
+ * - dairy_free: không sữa
+ * - gluten_free: không gluten
+ * - nut_free: không hạt
+ * - halal: demo: không heo + không rượu (rất đơn giản, minh hoạ thôi)
+ */
+function inferDietTags(recipe) {
+  const title = recipe?.title || "";
+  const ing = recipe?.ingredients || "";
+  const hay = `${title} ${ing}`;
+
+  const hasMeat = includesAny(hay, KW_MEAT);
+  const hasEgg = includesAny(hay, KW_EGG);
+  const hasDairy = includesAny(hay, KW_DAIRY);
+  const hasGluten = includesAny(hay, KW_GLUTEN);
+  const hasNut = includesAny(hay, KW_NUT);
+  const hasPork = includesAny(hay, KW_PORK);
+  const hasAlcohol = includesAny(hay, KW_ALCOHOL);
+
+  const vegetarian = !hasMeat; // no meat/seafood
+  const vegan = !hasMeat && !hasEgg && !hasDairy;
+
+  return {
+    vegetarian,
+    vegan,
+    gluten_free: !hasGluten,
+    dairy_free: !hasDairy,
+    nut_free: !hasNut,
+    halal: !hasPork && !hasAlcohol,
+  };
+}
+
+function attachDietTags(list) {
+  return (list || []).map((r) => ({
+    ...r,
+    diet: r.diet || inferDietTags(r),
+  }));
+}
+
+function getSelectedDietFilters() {
+  const checked = Array.from(
+    document.querySelectorAll('input[name="diet"]:checked')
+  ).map((x) => String(x.value));
+  return checked;
+}
+
+function updateDietCountUI() {
+  if (!dietCountEl) return;
+  const n = getSelectedDietFilters().length;
+  dietCountEl.textContent = String(n);
+}
+
+function matchDiet(recipe) {
+  const selected = getSelectedDietFilters();
+  if (!selected.length) return true;
+
+  const tags = recipe?.diet || inferDietTags(recipe);
+  // AND logic: bật nhiều cái -> phải đạt hết
+  return selected.every((key) => !!tags[key]);
+}
+
+// =======================
+// DEMO NUTRITION (để đẩy sang /nutrition)
+// =======================
+
+// hash đơn giản để số "ổn định" theo món (demo)
+function hashCode(str) {
+  const s = String(str || "");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+/**
+ * Tạo dinh dưỡng demo (kcal/protein/carbs/fat/fiber/sugar/sodium)
+ * → bạn dùng để tính tổng ở nutrition.html
+ */
+function makeMockNutrition(recipe) {
+  const base = hashCode(`${recipe?.title || ""}|${recipe?.ingredients || ""}`);
+  const rnd = (min, max) => min + (base % (max - min + 1));
+
+  // scale kiểu "mỗi món"
+  const calories = rnd(250, 750);
+  const protein = rnd(8, 45);
+  const carbs = rnd(20, 110);
+  const fat = rnd(6, 35);
+  const fiber = rnd(2, 18);
+  const sugar = rnd(1, 25);
+  const sodium = rnd(200, 1600);
+
+  return { calories, protein, carbs, fat, fiber, sugar, sodium };
+}
+
+// =======================
 // MODAL REVIEW
 // =======================
 function setStarPicker(rating) {
@@ -181,9 +323,8 @@ if (reviewModal) {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && reviewModal && reviewModal.classList.contains("show")) {
+  if (e.key === "Escape" && reviewModal && reviewModal.classList.contains("show"))
     closeReviewModal();
-  }
 });
 
 // =======================
@@ -196,7 +337,9 @@ function createRatingRow(recipe, source) {
   return `
     <div class="recipe-rating-row" style="align-items:flex-start;">
       <div>
-        <span class="stars" title="Điểm trung bình: ${avg.toFixed(2)}">${renderStars(avg)}</span>
+        <span class="stars" title="Điểm trung bình: ${avg.toFixed(
+          2
+        )}">${renderStars(avg)}</span>
         <span class="rating-count">(${count})</span>
       </div>
 
@@ -307,19 +450,31 @@ function createUserCard(recipe, index) {
 }
 
 // =======================
-// RENDER
+// RENDER (áp dụng search + dietary)
 // =======================
+function filterBySearchAndDiet(list, searchTerm) {
+  const q = String(searchTerm || "").trim().toLowerCase();
+
+  return (list || []).filter((r) => {
+    // search
+    const okSearch =
+      !q ||
+      String(r.title || "").toLowerCase().includes(q) ||
+      String(r.ingredients || "").toLowerCase().includes(q);
+
+    if (!okSearch) return false;
+
+    // dietary filters
+    if (!matchDiet(r)) return false;
+
+    return true;
+  });
+}
+
 function renderDefaultRecipes(searchTerm = "") {
   if (!defaultListEl) return;
 
-  const q = searchTerm.trim().toLowerCase();
-  const filtered = defaultRecipes.filter((r) => {
-    if (!q) return true;
-    return (
-      (r.title || "").toLowerCase().includes(q) ||
-      (r.ingredients || "").toLowerCase().includes(q)
-    );
-  });
+  const filtered = filterBySearchAndDiet(defaultRecipes, searchTerm);
 
   if (!filtered.length) {
     defaultListEl.innerHTML =
@@ -335,18 +490,11 @@ function renderDefaultRecipes(searchTerm = "") {
 function renderUserRecipes(searchTerm = "") {
   if (!userListEl) return;
 
-  const q = searchTerm.trim().toLowerCase();
-  const filtered = userRecipes.filter((r) => {
-    if (!q) return true;
-    return (
-      (r.title || "").toLowerCase().includes(q) ||
-      (r.ingredients || "").toLowerCase().includes(q)
-    );
-  });
+  const filtered = filterBySearchAndDiet(userRecipes, searchTerm);
 
   if (!filtered.length) {
     userListEl.innerHTML =
-      '<p class="empty-text">Chưa có công thức phù hợp. Hãy thử từ khoá khác hoặc thêm món mới 👩‍🍳</p>';
+      '<p class="empty-text">Chưa có công thức phù hợp. Hãy thử từ khoá khác hoặc đổi bộ lọc 👩‍🍳</p>';
     if (emptyUserText) emptyUserText.style.display = "block";
     return;
   }
@@ -370,7 +518,8 @@ async function loadDefaultRecipes() {
     const res = await fetch("/default-recipes/");
     if (!res.ok) throw new Error("Failed to load default recipes");
     defaultRecipes = await res.json();
-    renderDefaultRecipes();
+    defaultRecipes = attachDietTags(defaultRecipes);
+    applySearch();
   } catch (err) {
     console.error(err);
     defaultListEl.innerHTML =
@@ -396,9 +545,10 @@ async function loadUserRecipes() {
     const res = await fetch("/api/recipes/");
     if (!res.ok) throw new Error("Failed to load recipes");
     userRecipes = await res.json();
+    userRecipes = attachDietTags(userRecipes);
 
     rebuildDbTitleMap();
-    renderUserRecipes();
+    applySearch();
   } catch (err) {
     console.error(err);
     userListEl.innerHTML =
@@ -410,6 +560,7 @@ async function loadUserRecipes() {
 // SEARCH
 // =======================
 function applySearch() {
+  updateDietCountUI();
   const term = (searchInput && searchInput.value) || "";
   renderDefaultRecipes(term);
   renderUserRecipes(term);
@@ -477,6 +628,13 @@ async function fetchAndRefreshRecipeStats(recipeId) {
 // =======================
 // CLICK HANDLER
 // =======================
+function findRecipeBySourceAndId(source, id) {
+  if (source === "default") {
+    return defaultRecipes.find((r) => String(r.id) === String(id)) || null;
+  }
+  return userRecipes.find((r) => String(r.id) === String(id)) || null;
+}
+
 function handleListClick(e) {
   const btn = e.target.closest("button[data-action]");
   if (!btn) return;
@@ -525,9 +683,40 @@ function handleListClick(e) {
     return;
   }
 
+  // ✅ Nutrition: lưu món sang sessionStorage + chuyển trang
   if (action === "nutrition") {
     if (!id) return;
-    window.location.href = `/nutrition?source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}`;
+
+    const r = findRecipeBySourceAndId(source, id);
+    if (!r) {
+      window.location.href = `/nutrition?source=${encodeURIComponent(
+        source
+      )}&id=${encodeURIComponent(id)}`;
+      return;
+    }
+
+    const payload = {
+      source,
+      id: String(id),
+      title: r.title || "",
+      category: r.category || "",
+      ingredients: r.ingredients || "",
+      note: r.note || "",
+      // demo nutrition để trang nutrition tính tổng nhiều món
+      nutrition: makeMockNutrition(r),
+      // demo dietary tags (nếu bạn muốn show icon ở nutrition)
+      diet: r.diet || inferDietTags(r),
+    };
+
+    try {
+      sessionStorage.setItem("nutrition:selectedRecipe", JSON.stringify(payload));
+    } catch (e) {
+      // ignore
+    }
+
+    window.location.href = `/nutrition?source=${encodeURIComponent(
+      source
+    )}&id=${encodeURIComponent(id)}`;
     return;
   }
 }
@@ -610,4 +799,21 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // diet events
+  if (dietWrap) {
+    const dietInputs = Array.from(document.querySelectorAll('input[name="diet"]'));
+    dietInputs.forEach((ip) => ip.addEventListener("change", applySearch));
+  }
+
+  if (btnClearDiet) {
+    btnClearDiet.addEventListener("click", () => {
+      Array.from(document.querySelectorAll('input[name="diet"]')).forEach((ip) => {
+        ip.checked = false;
+      });
+      applySearch();
+    });
+  }
+
+  updateDietCountUI();
 });

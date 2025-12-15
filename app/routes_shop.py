@@ -1,301 +1,188 @@
-# app/routes_shop.py
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    UploadFile,
-    File,
-    Form,
-    HTTPException,
-    Response,
-)
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pathlib import Path
 
-from app.database import get_db
-from app import models
-
-import os
-import uuid
-import shutil
+from .database import get_db
+from .models import Product, Order, OrderItem
 
 router = APIRouter(prefix="/api/shop", tags=["Shop"])
 
-# Thư mục lưu ảnh sản phẩm
-UPLOAD_DIR = "static/uploads/products"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# CKMANGUONMO/static/img (vì __file__ = CKMANGUONMO/app/routes_shop.py)
+STATIC_IMG_DIR = Path(__file__).resolve().parent.parent / "static" / "img"
 
 
-# =========================
-#     TIỆN ÍCH ẢNH
-# =========================
-def save_image(file: UploadFile | None) -> str | None:
-    """Lưu file upload và trả về tên file (hoặc None nếu không có)."""
-    if not file:
+def to_int(v, default=0) -> int:
+    try:
+        return int(v)
+    except Exception:
+        return default
+
+
+def image_url(img: str | None):
+    """
+    Chuẩn hóa đường dẫn ảnh từ DB:
+      - '/static/...' => giữ nguyên
+      - 'img/xxx.jpg' => '/static/img/xxx.jpg'
+      - 'imgshop1.jpg' => '/static/img/imgshop1.jpg'
+    """
+    if not img:
         return None
 
-    ext = file.filename.split(".")[-1]
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
+    img = str(img).strip()
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    if img.startswith("/static/"):
+        return img
 
-    return filename
+    if img.startswith("img/"):
+        return "/static/" + img
 
+    if "/" not in img:
+        return "/static/img/" + img
 
-def image_url(filename: str | None) -> str | None:
-    """Trả về đường dẫn cho FE, nếu không có ảnh thì trả về None."""
-    if not filename:
-        return None
-    return f"/static/uploads/products/{filename}"
+    return img
 
 
-# =========================
-#     PRODUCT CRUD
-# =========================
+def default_shop_image(product_id: int) -> str | None:
+    """
+    Fallback theo id sản phẩm: imgshop1..imgshop6 (xoay vòng).
+    Tự dò đúng extension file đang có (jpg/png/...)
+    """
+    idx = ((product_id - 1) % 6) + 1
+    for ext in ("jpg", "png", "jpeg", "webp"):
+        fname = f"imgshop{idx}.{ext}"
+        if (STATIC_IMG_DIR / fname).exists():
+            return f"/static/img/{fname}"
+    return None
+
 
 @router.get("/products")
-def list_products(db: Session = Depends(get_db)):
-    products = db.query(models.Product).order_by(models.Product.id.desc()).all()
+def get_products(db: Session = Depends(get_db)):
+    rows = db.query(Product).order_by(Product.id.asc()).all()
 
-    return [
-        {
-            "id": p.id,
-            "name": p.name,
-            "price": p.price,
-            "unit": p.unit,
-            "badge": p.badge,
-            "image": image_url(p.image),
-        }
-        for p in products
-    ]
+    data = []
+    for p in rows:
+        db_img = getattr(p, "image", None)  # có cũng được, không có cũng ok
+        img = image_url(db_img)
 
+        # ✅ nếu DB không có/đang sai => dùng imgshop1..6
+        if not img:
+            img = default_shop_image(p.id)
 
-@router.get("/products/{product_id}")
-def get_product(product_id: int, db: Session = Depends(get_db)):
-    product = (
-        db.query(models.Product)
-        .filter(models.Product.id == product_id)
-        .first()
-    )
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
+        data.append(
+            {
+                "id": p.id,
+                "name": p.name,
+                "price": to_int(getattr(p, "price", 0)),
+                "unit": getattr(p, "unit", None),
+                "badge": getattr(p, "badge", None),
+                "image": img,  # ✅ luôn trả ra /static/img/...
+            }
+        )
+    return data
 
-    return {
-        "id": product.id,
-        "name": product.name,
-        "price": product.price,
-        "unit": product.unit,
-        "badge": product.badge,
-        "image": image_url(product.image),
-    }
-
-
-@router.post("/products")
-async def create_product(
-    name: str = Form(...),
-    price: int = Form(...),
-    unit: str | None = Form(None),
-    badge: str | None = Form(None),
-    image: UploadFile | None = File(None),
-    db: Session = Depends(get_db),
-):
-    filename = save_image(image)
-
-    product = models.Product(
-        name=name,
-        price=price,
-        unit=unit,
-        badge=badge,
-        image=filename,
-    )
-    db.add(product)
-    db.commit()
-    db.refresh(product)
-
-    return {
-        "message": "Created",
-        "id": product.id,
-        "image": image_url(product.image),
-    }
-
-
-@router.put("/products/{product_id}")
-async def update_product(
-    product_id: int,
-    name: str = Form(...),
-    price: int = Form(...),
-    unit: str | None = Form(None),
-    badge: str | None = Form(None),
-    image: UploadFile | None = File(None),
-    db: Session = Depends(get_db),
-):
-    product = (
-        db.query(models.Product)
-        .filter(models.Product.id == product_id)
-        .first()
-    )
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    product.name = name
-    product.price = price
-    product.unit = unit
-    product.badge = badge
-
-    if image:
-        filename = save_image(image)
-        product.image = filename
-
-    db.commit()
-    db.refresh(product)
-
-    return {
-        "message": "Updated",
-        "id": product.id,
-        "image": image_url(product.image),
-    }
-
-
-@router.delete("/products/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
-    product = (
-        db.query(models.Product)
-        .filter(models.Product.id == product_id)
-        .first()
-    )
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    db.delete(product)
-    db.commit()
-    return {"message": "Deleted"}
-
-
-# =========================
-#     ORDER MODEL (input)
-# =========================
-
-class OrderItemIn(BaseModel):
-    product_id: int
-    qty: int
-
-
-class OrderCreate(BaseModel):
-    customer_name: str | None = None
-    note: str | None = None
-    items: list[OrderItemIn]
-
-
-# =========================
-#     ORDER API
-# =========================
 
 @router.post("/orders")
-def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
-    if not payload.items:
+def create_order(payload: dict, db: Session = Depends(get_db)):
+    items = payload.get("items") or []
+    if not items:
         raise HTTPException(status_code=400, detail="Giỏ hàng trống")
 
-    # Lấy tất cả product cần dùng
-    product_ids = [item.product_id for item in payload.items]
-    products = (
-        db.query(models.Product)
-        .filter(models.Product.id.in_(product_ids))
-        .all()
-    )
-    product_map = {p.id: p for p in products}
+    norm_items = []
+    for it in items:
+        pid = to_int(it.get("product_id"), 0)
+        qty = to_int(it.get("qty"), 0)
+        if pid <= 0 or qty <= 0:
+            raise HTTPException(status_code=400, detail="Dữ liệu sản phẩm không hợp lệ")
+        norm_items.append({"product_id": pid, "qty": qty})
 
-    # Kiểm tra thiếu sản phẩm nào không
-    missing_ids = [pid for pid in product_ids if pid not in product_map]
-    if missing_ids:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Sản phẩm không tồn tại: {missing_ids}",
+    product_ids = [i["product_id"] for i in norm_items]
+    products = db.query(Product).filter(Product.id.in_(product_ids)).all()
+    prod_map = {p.id: p for p in products}
+
+    missing = [pid for pid in product_ids if pid not in prod_map]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Sản phẩm không tồn tại: {missing}")
+
+    total = 0
+    for it in norm_items:
+        p = prod_map[it["product_id"]]
+        total += it["qty"] * to_int(getattr(p, "price", 0))
+
+    try:
+        order = Order(
+            customer_name=payload.get("customer_name") or "Khách lẻ",
+            note=payload.get("note") or "Đơn tạo từ /shopping-list",
+            total_price=total,
         )
+        db.add(order)
+        db.flush()
 
-    total_price = 0
-    order_items = []
+        # schema order_items: product_name, unit_price, quantity
+        for it in norm_items:
+            p = prod_map[it["product_id"]]
+            db.add(
+                OrderItem(
+                    order_id=order.id,
+                    product_id=p.id,
+                    product_name=p.name,
+                    unit_price=to_int(p.price),
+                    quantity=it["qty"],
+                )
+            )
 
-    for item in payload.items:
-        prod = product_map[item.product_id]
-        line_total = prod.price * item.qty
-        total_price += line_total
+        db.commit()
+        return {"order_id": order.id, "total_price": to_int(order.total_price)}
 
-        oi = models.OrderItem(
-            product_id=prod.id,
-            product_name=prod.name,
-            unit_price=prod.price,
-            quantity=item.qty,
-        )
-        order_items.append(oi)
-
-    order = models.Order(
-        customer_name=payload.customer_name or "Khách lẻ",
-        note=payload.note or "Đơn tạo từ /shopping-list",
-        total_price=total_price,
-        items=order_items,
-    )
-
-    db.add(order)
-    db.commit()
-    db.refresh(order)
-
-    return {
-        "message": "Order created",
-        "order_id": order.id,
-        "total_price": total_price,
-    }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/orders")
 def list_orders(db: Session = Depends(get_db)):
-    orders = (
-        db.query(models.Order)
-        .order_by(models.Order.id.desc())
-        .all()
-    )
-
+    orders = db.query(Order).order_by(Order.id.desc()).all()
     result = []
+
     for o in orders:
+        items = (
+            db.query(OrderItem)
+            .filter(OrderItem.order_id == o.id)
+            .order_by(OrderItem.id.asc())
+            .all()
+        )
         result.append(
             {
                 "id": o.id,
-                "customer_name": o.customer_name,
-                "note": o.note,
-                "total_price": o.total_price,
-                "created_at": o.created_at,
+                "customer_name": getattr(o, "customer_name", None),
+                "note": getattr(o, "note", None),
+                "total_price": to_int(getattr(o, "total_price", 0)),
+                "created_at": getattr(o, "created_at", None),
                 "items": [
                     {
-                        "product_name": i.product_name,
-                        "unit_price": i.unit_price,
-                        "quantity": i.quantity,
+                        "id": it.id,
+                        "product_id": it.product_id,
+                        "product_name": it.product_name,
+                        "unit_price": to_int(it.unit_price),
+                        "quantity": to_int(it.quantity),
                     }
-                    for i in o.items
+                    for it in items
                 ],
             }
         )
+
     return result
 
 
-# ✅ NEW: DELETE /api/shop/orders/{order_id}
-# Bấm "Đã mua" sẽ gọi API này để xóa đơn khỏi DB
 @router.delete("/orders/{order_id}", status_code=204)
 def delete_order(order_id: int, db: Session = Depends(get_db)):
-    order = (
-        db.query(models.Order)
-        .filter(models.Order.id == order_id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+    o = db.query(Order).filter(Order.id == order_id).first()
+    if not o:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
 
-    # Xóa order_items trước để tránh lỗi khóa ngoại (nếu bạn chưa set cascade)
-    db.query(models.OrderItem).filter(models.OrderItem.order_id == order_id).delete()
-
-    # Xóa order
-    db.delete(order)
-    db.commit()
-
-    # 204 No Content
-    return Response(status_code=204)
+    try:
+        db.delete(o)
+        db.commit()
+        return Response(status_code=204)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

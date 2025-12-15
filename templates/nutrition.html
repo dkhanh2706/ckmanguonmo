@@ -1,91 +1,195 @@
 {% extends "base.html" %}
-{% block title %}Dinh dưỡng{% endblock %}
+{% block title %}Nutrition Calculator – Yuki Meal Planner{% endblock %}
 {% block content %}
 
 <style>
-  .nutrition-box {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-  }
+  .nutri-wrap { max-width: 1180px; margin: 0 auto; padding: 18px 12px; }
+  .nutri-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom: 14px; }
+  .nutri-head h1 { margin:0; font-size: 1.35rem; }
+  .nutri-head p { margin:6px 0 0; color:#6b7280; }
 
-  .nutrition-header {
-    text-align: center;
-    margin-bottom: 20px;
-  }
+  .grid { display:grid; grid-template-columns: 1.25fr 1fr; gap: 14px; }
+  @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
 
-  .nutrition-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius: 16px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+  .card h2 { margin: 0 0 10px; font-size: 1.05rem; }
+  .muted { color:#6b7280; font-size:.9rem; }
+  .mini { color:#6b7280; font-size:.85rem; margin-top:8px; }
 
-  .nutrition-card {
-    background: #fff;
-    border-radius: 14px;
-    padding: 16px;
+  .recipe-row { display:flex; gap:12px; align-items:center; }
+  .thumb { width: 92px; height: 72px; border-radius: 14px; overflow:hidden; background:#f3f4f6; flex: 0 0 auto; }
+  .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .meta h3 { margin:0; font-size: 1.0rem; }
+  .meta .sub { margin:4px 0 0; color:#6b7280; font-size: .9rem; }
+
+  .table { width:100%; border-collapse: collapse; margin-top: 10px; }
+  .table th, .table td { text-align:left; padding: 10px 8px; border-bottom: 1px solid #f1f5f9; font-size: .92rem; }
+  .table th { color:#475569; font-weight:600; }
+
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top: 10px; }
+  .btn { border:1px solid #cbd5e1; background:#f8fafc; padding: 8px 12px; border-radius: 999px; cursor:pointer; font-size:.9rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+  .btn:hover { background:#e5e7eb; }
+  .btn-primary { border: 0; background: #111827; color:#fff; }
+  .btn-primary:hover { filter: brightness(1.05); }
+  .btn-danger { border: 1px solid #fecaca; background:#fff1f2; }
+  .btn-danger:hover { background:#ffe4e6; }
+
+  .pick-list { display:flex; flex-direction:column; gap:10px; margin-top: 8px; }
+  .pick-item { display:flex; justify-content:space-between; gap:10px; padding:10px; border:1px dashed #e5e7eb; border-radius: 14px; }
+  .pick-left { min-width: 0; }
+  .pick-title { font-weight:600; margin:0; }
+  .pick-sub { margin:4px 0 0; color:#6b7280; font-size:.85rem; }
+  .qty { width: 70px; padding: 6px 8px; border:1px solid #d1d5db; border-radius: 10px; }
+
+  .sum-box { margin-top: 10px; padding: 10px; border-radius: 14px; background: #f8fafc; border:1px solid #e5e7eb; }
+  .sum-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+  @media (max-width: 520px){ .sum-grid { grid-template-columns: 1fr; } }
+  .kv { display:flex; justify-content:space-between; gap:10px; padding: 8px 10px; background:#fff; border:1px solid #eef2f7; border-radius: 12px; }
+
+  /* TDEE + Macro UI */
+  .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  @media (max-width: 520px){ .form-grid { grid-template-columns: 1fr; } }
+  .field label { display:block; font-size:.85rem; color:#475569; margin-bottom:6px; }
+  .field input, .field select {
+    width:100%; padding: 9px 10px; border:1px solid #d1d5db; border-radius: 12px; background:#fff;
+    outline:none;
+  }
+  .field input:focus, .field select:focus { border-color:#111827; }
+
+  .result-row { display:flex; justify-content:space-between; gap:12px; padding: 10px; border:1px solid #eef2f7; border-radius: 12px; background:#fff; margin-top: 10px; }
+  .badge { font-size:.8rem; padding: 4px 10px; border-radius: 999px; border:1px solid #e5e7eb; background:#f8fafc; }
+  .badge.ok { border-color:#bbf7d0; background:#f0fdf4; }
+  .badge.warn { border-color:#fde68a; background:#fffbeb; }
+  .badge.bad { border-color:#fecaca; background:#fff1f2; }
+
+  .bar {
+    height: 12px; background:#e5e7eb; border-radius: 999px; overflow:hidden;
     border: 1px solid #e5e7eb;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
   }
-
-  .nutrition-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-  }
-
-  .nutrition-table th,
-  .nutrition-table td {
-    padding: 8px;
-    border-bottom: 1px solid #e5e7eb;
-    text-align: left;
-  }
-
-  .nutrition-table th {
-    background: #f8fafc;
-  }
-
-  @media (max-width: 768px) {
-    .nutrition-grid {
-      grid-template-columns: 1fr;
-    }
-  }
+  .bar > div { height:100%; width:0%; background:#111827; }
+  .barline { display:flex; justify-content:space-between; margin:8px 0 6px; font-size:.85rem; color:#475569; }
+  .macro-grid { display:grid; grid-template-columns: 1fr; gap: 10px; margin-top:10px; }
+  .macro-card { padding: 10px; border:1px solid #eef2f7; border-radius: 14px; background:#fff; }
+  .macro-top { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:8px; }
+  .macro-top strong { font-size:.95rem; }
+  .hint { margin-top:10px; padding: 10px; border-radius: 14px; border:1px solid #e5e7eb; background:#fff; }
+  .hint ul { margin: 6px 0 0 18px; color:#475569; }
 </style>
 
-<div class="nutrition-box">
-  <div class="nutrition-header">
-    <h2>🥗 Thông tin dinh dưỡng</h2>
-    <p id="recipe-name" class="text-muted"></p>
+<div class="nutri-wrap">
+  <div class="nutri-head">
+    <div>
+      <h1>🥗 Nutrition Calculator</h1>
+      <p>Tính tổng dinh dưỡng món ăn + tính TDEE + kiểm tra cân bằng Macro (Protein/Carb/Fat).</p>
+    </div>
+    <div class="actions">
+      <a class="btn" href="/recipes">← Quay lại công thức</a>
+    </div>
   </div>
 
-  <div class="nutrition-grid">
-    <!-- Chart -->
-    <div class="nutrition-card">
-      <h3>📊 Sơ đồ dinh dưỡng</h3>
-      <canvas id="nutritionChart" height="200"></canvas>
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="card">
+      <h2>Món đang xem</h2>
+
+      <div id="current-recipe" class="recipe-row"></div>
+
+      <table class="table" id="nutri-table" style="display:none;">
+        <thead>
+          <tr><th>Chỉ số</th><th>Giá trị (1 phần)</th></tr>
+        </thead>
+        <tbody id="nutri-tbody"></tbody>
+      </table>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-add-to-total">➕ Thêm vào tính tổng</button>
+        <button class="btns btn" id="btn-randomize">🎲 Tạo lại số (minh hoạ)</button>
+      </div>
+
+      <div class="mini">
+        * Số liệu dinh dưỡng chỉ là minh hoạ, không phải dữ liệu y tế.
+      </div>
+
+      <hr style="border:none; border-top:1px solid #eef2f7; margin:14px 0;">
+
+      <h2>🧍 TDEE Calculator (nhu cầu calo/ngày)</h2>
+      <div class="muted">Nhập thông tin cá nhân → tính BMR & TDEE → so với tổng calo bạn đã chọn.</div>
+
+      <div class="form-grid" style="margin-top:10px;">
+        <div class="field">
+          <label>Giới tính</label>
+          <select id="sex">
+            <option value="male">Nam</option>
+            <option value="female">Nữ</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Tuổi</label>
+          <input id="age" type="number" min="10" max="90" value="20">
+        </div>
+
+        <div class="field">
+          <label>Chiều cao (cm)</label>
+          <input id="height" type="number" min="120" max="220" value="170">
+        </div>
+
+        <div class="field">
+          <label>Cân nặng (kg)</label>
+          <input id="weight" type="number" min="30" max="200" value="60">
+        </div>
+
+        <div class="field" style="grid-column: 1 / -1;">
+          <label>Mức độ vận động</label>
+          <select id="activity">
+            <option value="1.2">Ít vận động (1.2)</option>
+            <option value="1.375">Nhẹ (1–3 buổi/tuần) (1.375)</option>
+            <option value="1.55" selected>Vừa (3–5 buổi/tuần) (1.55)</option>
+            <option value="1.725">Nhiều (6–7 buổi/tuần) (1.725)</option>
+            <option value="1.9">Rất nhiều (1.9)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-calc-tdee">⚡ Tính TDEE</button>
+        <button class="btn" id="btn-save-profile">💾 Lưu thông tin</button>
+      </div>
+
+      <div id="tdee-results" style="margin-top:10px;"></div>
+
+      <div id="energy-compare" class="hint" style="display:none;"></div>
     </div>
 
-    <!-- Table -->
-    <div class="nutrition-card">
-      <h3>📋 Thành phần dinh dưỡng</h3>
-      <table class="nutrition-table">
-        <tr><th>Thành phần</th><th>Giá trị</th></tr>
-        <tr><td>Calories</td><td>450 kcal</td></tr>
-        <tr><td>Protein</td><td>22 g</td></tr>
-        <tr><td>Carbohydrate</td><td>55 g</td></tr>
-        <tr><td>Fat</td><td>18 g</td></tr>
-        <tr><td>Chất xơ</td><td>6 g</td></tr>
-        <tr><td>Muối</td><td>1.2 g</td></tr>
-      </table>
-      <p style="font-size:0.8rem;color:#6b7280;margin-top:6px">
-        * Số liệu mang tính minh họa
-      </p>
+    <!-- RIGHT -->
+    <div class="card">
+      <h2>Danh sách tính tổng</h2>
+
+      <div id="picked-list" class="pick-list"></div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-calc-total">✅ Tính tổng</button>
+        <button class="btn btn-danger" id="btn-clear">🧹 Xoá danh sách</button>
+      </div>
+
+      <div class="sum-box">
+        <div style="font-weight:700; margin-bottom:8px;">Tổng dinh dưỡng</div>
+        <div id="sum-grid" class="sum-grid"></div>
+      </div>
+
+      <hr style="border:none; border-top:1px solid #eef2f7; margin:14px 0;">
+
+      <h2>⚖️ Macro Ratio (P/C/F)</h2>
+      <div class="muted">
+        Tính % Protein/Carb/Fat dựa trên quy đổi năng lượng (P=4kcal/g, C=4kcal/g, F=9kcal/g).
+      </div>
+
+      <div id="macro-box" class="macro-grid"></div>
+
+      <div id="macro-hint" class="hint" style="display:none;"></div>
     </div>
   </div>
 </div>
 
-<!-- ChartJS -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/static/js/nutrition.js"></script>
-
+<script src="/static/js/nutrition.js?v=2001"></script>
 {% endblock %}

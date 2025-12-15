@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
@@ -18,19 +17,19 @@ load_dotenv(ROOT_DIR / ".env")
 # =========================
 # DB + Models
 # =========================
-from .database import Base, engine
-from . import models  # noqa: F401
+from .database import Base, engine  # noqa: E402
+from . import models  # noqa: F401, E402  (import để đăng ký models)
 
 # =========================
 # Routers
 # =========================
-from .routes_auth import router as auth_router
-from .routes_recipes import router as recipes_router
-from .routes_default_recipes import router as default_recipes_router
-from .routes_student_planner import router as student_planner_router
-from .routes_gym_planner import router as gym_planner_router
-from .routes_shop import router as shop_router
-from .routes_planner import router as planner_router
+from .routes_auth import router as auth_router  # noqa: E402
+from .routes_recipes import router as recipes_router  # noqa: E402
+from .routes_default_recipes import router as default_recipes_router  # noqa: E402
+from .routes_student_planner import router as student_planner_router  # noqa: E402
+from .routes_gym_planner import router as gym_planner_router  # noqa: E402
+from .routes_shop import router as shop_router  # noqa: E402
+from .routes_planner import router as planner_router  # noqa: E402
 
 # =========================
 # App
@@ -110,6 +109,7 @@ def page_order_history(request: Request):
     return templates.TemplateResponse("order_history.html", {"request": request})
 
 
+# ✅ TRANG DINH DƯỠNG (bấm nút dinh dưỡng từ recipes_list.js qua đây)
 @app.get("/nutrition", response_class=HTMLResponse)
 def page_nutrition(request: Request):
     return templates.TemplateResponse("nutrition.html", {"request": request})
