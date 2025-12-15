@@ -1,51 +1,25 @@
-attrs==23.2.0
-Babel==2.10.3
-blinker==1.7.0
-certifi==2023.11.17
-chardet==5.2.0
-click==8.1.6
-colorama==0.4.6
-configobj==5.0.8
-cryptography==41.0.7
-distro==1.9.0
-h11==0.14.0
-httplib2==0.20.4
-idna==3.6
-Jinja2==3.1.2
-jsonpatch==1.32
-jsonpointer==2.0
-jsonschema==4.10.3
-markdown-it-py==3.0.0
-MarkupSafe==2.1.5
-mdurl==0.1.2
-email-validator
-netaddr==0.8.0
-oauthlib==3.2.2
-olefile==0.46
-pexpect==4.9.0
-pillow==10.2.0
-ptyprocess==0.7.0
-Pygments==2.17.2
-PyJWT==2.7.0
-pyparsing==3.1.1
-pyrsistent==0.20.0
-pyserial==3.5
-python-dateutil==2.8.2
-pytz==2024.1
-PyYAML==6.0.1
-requests==2.31.0
-rich==13.7.1
-six==1.16.0
-typing_extensions==4.10.0
-urllib3==2.0.7
-uvicorn==0.27.1
-uvloop==0.19.0
-wsproto==1.2.0
-fastapi
-uvicorn[standard]
-pydantic
-python-dotenv
-sqlalchemy
-alembic
-passlib[bcrypt]
+# ===== Core web =====
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+jinja2==3.1.4
+python-dotenv==1.0.1
+python-multipart==0.0.20
+email-validator==2.3.0
 
+# ===== Auth =====
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
+
+# ===== DB (PostgreSQL) =====
+sqlalchemy==2.0.36
+alembic==1.14.0
+psycopg2-binary==2.9.10
+
+# ===== Fixes for Python 3.13 =====
+pydantic>=2.8.0
+uvloop>=0.21.0
+pillow>=11.0.0
+
+# ===== HTTP/UI helpers =====
+requests==2.31.0
