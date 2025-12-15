@@ -21,7 +21,7 @@ from .database import Base, engine  # noqa: E402
 from . import models  # noqa: F401, E402
 
 # =========================
-# Routers
+# Routers (API)
 # =========================
 from .routes_auth import router as auth_router  # noqa: E402
 from .routes_recipes import router as recipes_router  # noqa: E402
@@ -61,7 +61,7 @@ def on_startup():
     Base.metadata.create_all(bind=engine)
 
 # =========================
-# Include routers
+# Include routers (API)
 # =========================
 app.include_router(auth_router)
 app.include_router(recipes_router)
@@ -115,23 +115,30 @@ def page_nutrition(request: Request):
     return templates.TemplateResponse("nutrition.html", {"request": request})
 
 
+# ✅ RECIPES LIST
 @app.get("/recipes", response_class=HTMLResponse)
 def page_recipes_list(request: Request):
     return templates.TemplateResponse("recipes_list.html", {"request": request})
 
 
+# ✅ ADD RECIPE (GIỮ ROUTE CŨ)
 @app.get("/recipes/add", response_class=HTMLResponse)
 def page_recipe_add(request: Request):
+    return templates.TemplateResponse("recipe_add.html", {"request": request})
+
+
+# ✅ ADD RECIPE (ALIAS ĐÚNG VỚI LINK FRONTEND: /recipes/new)
+@app.get("/recipes/new", response_class=HTMLResponse)
+def page_recipe_new(request: Request):
     return templates.TemplateResponse("recipe_add.html", {"request": request})
 
 
 # =========================
 # ✅ EDIT RECIPE - HỖ TRỢ CẢ 2 LINK
 # 1) /recipes/edit/{id}  (route cũ)
-# 2) /recipes/{id}/edit  (cách 2 - link frontend hay dùng)
+# 2) /recipes/{id}/edit  (link frontend hay dùng)
 # =========================
 
-# 1) GIỮ ROUTE CŨ (khỏi gãy chỗ nào đang gọi)
 @app.get("/recipes/edit/{recipe_id}", response_class=HTMLResponse)
 def page_recipe_edit_old(request: Request, recipe_id: int):
     return templates.TemplateResponse(
@@ -139,7 +146,7 @@ def page_recipe_edit_old(request: Request, recipe_id: int):
         {"request": request, "recipe_id": recipe_id},
     )
 
-# 2) ✅ ROUTE MỚI (CÁCH 2)
+
 @app.get("/recipes/{recipe_id}/edit", response_class=HTMLResponse)
 def page_recipe_edit(request: Request, recipe_id: int):
     return templates.TemplateResponse(
