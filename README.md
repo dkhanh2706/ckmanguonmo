@@ -181,22 +181,21 @@ CKMANGUONMO/
 
 ### 4.1 Cài môi trường
 
-```bash
 python -m venv .venv
 source .venv/bin/activate
 # hoặc
 .venv\Scripts\activate
 4.2 Cài thư viện
 pip install -r requirements.txt
-4.3 Cấu hình .env
-DATABASE_URL=sqlite:///./app.db
-SECRET_KEY=your_secret_key
-ALGORITHM=HS256
+4.3 Cấu hình để chạy
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install psycopg2-binary
+pip install python-multipart
 
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=23050157@student.bdu.edu.vn
-SMTP_PASS=your_app_password
+
 4.4 Chạy server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+
