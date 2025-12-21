@@ -1,3 +1,18 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# OS
+.DS_Store
+Thumbs.db
 # Ignore Python venv
 venv/
 .venv/
