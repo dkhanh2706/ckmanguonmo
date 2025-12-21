@@ -2,7 +2,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -44,7 +44,10 @@ if not STATIC_DIR.exists():
 if not TEMPLATES_DIR.exists():
     raise RuntimeError(f"Templates directory not found: {TEMPLATES_DIR}")
 
+# Mount static
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# Templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
@@ -52,6 +55,8 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 def on_startup():
     Base.metadata.create_all(bind=engine)
 
+
+# Include API routers
 app.include_router(auth_router)
 app.include_router(recipes_router)
 app.include_router(default_recipes_router)
@@ -60,6 +65,10 @@ app.include_router(gym_planner_router)
 app.include_router(shop_router)
 app.include_router(planner_router)
 
+
+# =========================
+# Pages (SSR)
+# =========================
 @app.get("/", response_class=HTMLResponse)
 def page_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -75,8 +84,16 @@ def page_register(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
 
+# --- QUÊN MẬT KHẨU ---
+# Route cũ
 @app.get("/forgot", response_class=HTMLResponse)
 def page_forgot(request: Request):
+    return templates.TemplateResponse("forgot.html", {"request": request})
+
+
+# ✅ Route đúng theo link bạn bấm/log: /forgot-password
+@app.get("/forgot-password", response_class=HTMLResponse)
+def page_forgot_password(request: Request):
     return templates.TemplateResponse("forgot.html", {"request": request})
 
 
@@ -133,3 +150,20 @@ def page_recipe_edit(request: Request, recipe_id: int):
         "recipe_edit.html",
         {"request": request, "recipe_id": recipe_id},
     )
+
+
+# =========================
+# Favicon (đỡ 404) - optional
+# =========================
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    ico = STATIC_DIR / "favicon.ico"
+    png = STATIC_DIR / "favicon.png"
+
+    if ico.exists():
+        return FileResponse(str(ico))
+    if png.exists():
+        return FileResponse(str(png))
+
+    # Không có file thì cứ để 404 (trình duyệt hỏi thôi, không ảnh hưởng app)
+    return HTMLResponse(status_code=404, content="")

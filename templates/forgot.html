@@ -1,58 +1,174 @@
 {% extends "base.html" %}
-{% block title %}Quên mật khẩu{% endblock %}
+{% block title %}Khôi phục mật khẩu{% endblock %}
 
 {% block content %}
 <div class="page-wrapper">
-    <section class="card auth-card">
-        <h2 class="title">Quên mật khẩu?</h2>
-        <p class="subtitle">
-            Nhập email, chúng tôi sẽ gửi hướng dẫn khôi phục (demo).
-        </p>
+  <section class="card auth-card">
+    <h2 class="title">Khôi phục mật khẩu</h2>
+    <p class="subtitle">
+      Nhập email để bắt đầu. Sau đó đặt mật khẩu mới (demo).
+    </p>
 
-        <form id="forgotForm" class="form">
-            <div class="field">
-                <label for="forgotEmail">Email</label>
-                <input type="email" id="forgotEmail" placeholder="you@example.com" required />
-            </div>
+    <!-- BƯỚC 1: NHẬP EMAIL -->
+    <form id="requestForm" class="form">
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@example.com" required autocomplete="email" />
+      </div>
 
-            <button type="submit" class="btn primary full-width">Gửi yêu cầu</button>
-        </form>
+      <button id="requestBtn" type="submit" class="btn primary full-width">
+        Gửi yêu cầu
+      </button>
+    </form>
 
-        <p id="forgotMessage" class="message"></p>
+    <!-- BƯỚC 2: ĐẶT MẬT KHẨU MỚI (ẩn cho tới khi bước 1 OK) -->
+    <form id="resetForm" class="form" style="display:none; margin-top:14px;">
+      <div class="field">
+        <label for="newPassword">Mật khẩu mới</label>
+        <input type="password" id="newPassword" placeholder="Nhập mật khẩu mới" required />
+      </div>
 
-        <div class="auth-links">
-            <a href="/login">Quay lại đăng nhập</a>
-        </div>
-    </section>
+      <div class="field">
+        <label for="confirmPassword">Xác nhận mật khẩu mới</label>
+        <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required />
+      </div>
+
+      <button id="resetBtn" type="submit" class="btn primary full-width">
+        Đổi mật khẩu
+      </button>
+    </form>
+
+    <p id="message" class="message"></p>
+
+    <div class="auth-links">
+      <a href="/login">Quay lại đăng nhập</a>
+    </div>
+  </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.getElementById("forgotForm").addEventListener("submit", async (e) => {
+(function () {
+  const requestForm = document.getElementById("requestForm");
+  const resetForm = document.getElementById("resetForm");
+
+  const emailInput = document.getElementById("email");
+  const newPassInput = document.getElementById("newPassword");
+  const confirmPassInput = document.getElementById("confirmPassword");
+
+  const requestBtn = document.getElementById("requestBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const msg = document.getElementById("message");
+
+  function setMessage(text, type) {
+    msg.textContent = text || "";
+    msg.classList.remove("success", "error");
+    if (type) msg.classList.add(type);
+  }
+
+  function disable(btn, text) {
+    btn.disabled = true;
+    btn.dataset.oldText = btn.textContent;
+    btn.textContent = text;
+  }
+
+  function enable(btn) {
+    btn.disabled = false;
+    btn.textContent = btn.dataset.oldText || btn.textContent;
+  }
+
+  // STEP 1: Gửi yêu cầu (backend của bạn nhận email qua query param)
+  requestForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    setMessage("", null);
 
-    const email = document.getElementById("forgotEmail").value;
-    const formData = new FormData();
-    formData.append("email", email);
-
-    const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        body: formData
-    });
-
-    const data = await res.json();
-    const msg = document.getElementById("forgotMessage");
-
-    if (res.ok) {
-        msg.textContent = data.message;
-        msg.classList.remove("error");
-        msg.classList.add("success");
-    } else {
-        msg.textContent = data.detail || "Có lỗi xảy ra";
-        msg.classList.remove("success");
-        msg.classList.add("error");
+    const email = (emailInput.value || "").trim();
+    if (!email) {
+      setMessage("Vui lòng nhập email.", "error");
+      emailInput.focus();
+      return;
     }
-});
+
+    disable(requestBtn, "Đang gửi...");
+
+    try {
+      const res = await fetch(
+        `/api/auth/forgot-password?email=${encodeURIComponent(email)}`,
+        { method: "POST", headers: { "Accept": "application/json" } }
+      );
+
+      let data = {};
+      try { data = await res.json(); } catch {}
+
+      if (!res.ok) {
+        setMessage(data.detail || "Có lỗi xảy ra.", "error");
+        return;
+      }
+
+      // OK -> Mở bước 2
+      setMessage(data.message || "Đã xác nhận email (demo). Hãy đặt mật khẩu mới.", "success");
+      resetForm.style.display = "block";
+      newPassInput.focus();
+    } catch (err) {
+      setMessage("Không kết nối được server. Hãy kiểm tra FastAPI đang chạy.", "error");
+    } finally {
+      enable(requestBtn);
+    }
+  });
+
+  // STEP 2: Đổi mật khẩu
+  resetForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setMessage("", null);
+
+    const email = (emailInput.value || "").trim();
+    const newPassword = (newPassInput.value || "").trim();
+    const confirmPassword = (confirmPassInput.value || "").trim();
+
+    if (!newPassword || newPassword.length < 6) {
+      setMessage("Mật khẩu mới phải có ít nhất 6 ký tự.", "error");
+      newPassInput.focus();
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setMessage("Xác nhận mật khẩu không khớp.", "error");
+      confirmPassInput.focus();
+      return;
+    }
+
+    disable(resetBtn, "Đang đổi...");
+
+    try {
+      // API reset-password (mình hướng dẫn bạn thêm ở phần B)
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ email, new_password: newPassword })
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch {}
+
+      if (res.ok) {
+        setMessage(data.message || "Đổi mật khẩu thành công. Bạn có thể đăng nhập lại.", "success");
+        // optional: reset UI
+        resetForm.style.display = "none";
+        newPassInput.value = "";
+        confirmPassInput.value = "";
+      } else {
+        setMessage(data.detail || "Không đổi được mật khẩu.", "error");
+      }
+    } catch (err) {
+      setMessage("Không kết nối được server. Hãy kiểm tra FastAPI đang chạy.", "error");
+    } finally {
+      enable(resetBtn);
+    }
+  });
+})();
 </script>
 {% endblock %}
