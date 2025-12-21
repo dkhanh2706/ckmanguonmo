@@ -36,9 +36,6 @@ from .routes_planner import router as planner_router  # noqa: E402
 # =========================
 app = FastAPI(title="CK Mang Nguon Mo")
 
-# =========================
-# Paths
-# =========================
 STATIC_DIR = ROOT_DIR / "static"
 TEMPLATES_DIR = ROOT_DIR / "templates"
 
@@ -47,22 +44,14 @@ if not STATIC_DIR.exists():
 if not TEMPLATES_DIR.exists():
     raise RuntimeError(f"Templates directory not found: {TEMPLATES_DIR}")
 
-# =========================
-# Static + Templates
-# =========================
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-# =========================
-# Startup: create DB tables
-# =========================
+
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
 
-# =========================
-# Include routers (API)
-# =========================
 app.include_router(auth_router)
 app.include_router(recipes_router)
 app.include_router(default_recipes_router)
@@ -71,9 +60,6 @@ app.include_router(gym_planner_router)
 app.include_router(shop_router)
 app.include_router(planner_router)
 
-# =========================
-# Pages (HTML)
-# =========================
 @app.get("/", response_class=HTMLResponse)
 def page_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -132,12 +118,6 @@ def page_recipe_add(request: Request):
 def page_recipe_new(request: Request):
     return templates.TemplateResponse("recipe_add.html", {"request": request})
 
-
-# =========================
-# ✅ EDIT RECIPE - HỖ TRỢ CẢ 2 LINK
-# 1) /recipes/edit/{id}  (route cũ)
-# 2) /recipes/{id}/edit  (link frontend hay dùng)
-# =========================
 
 @app.get("/recipes/edit/{recipe_id}", response_class=HTMLResponse)
 def page_recipe_edit_old(request: Request, recipe_id: int):

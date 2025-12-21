@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 DATABASE_URL = "postgresql+psycopg2://fastuser:fastpass@localhost:5432/fastdb"
 
+
 engine = create_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
